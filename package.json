@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev:backend": "pnpm --filter @estimador/backend dev",
-    "build:backend": "pnpm --filter @estimador/backend build",
+    "build:backend": "pnpm --filter @estimador/shared-types build && pnpm --filter @estimador/backend build",
     "seed": "pnpm --filter @estimador/backend seed",
     "dev:frontend": "pnpm --filter @estimador/frontend dev"
   }
