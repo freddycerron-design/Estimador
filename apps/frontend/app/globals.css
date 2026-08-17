@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-slate-50 text-slate-900;
+}
+
+.prose-report h1 {
+  @apply text-2xl font-bold mt-6 mb-3;
+}
+.prose-report h2 {
+  @apply text-lg font-semibold mt-5 mb-2 text-slate-800;
+}
+.prose-report h3 {
+  @apply text-base font-semibold mt-3 mb-1 text-slate-700;
+}
+.prose-report p {
+  @apply mb-2 leading-relaxed;
+}
+.prose-report ul {
+  @apply list-disc pl-5 mb-2 space-y-1;
+}
+.prose-report table {
+  @apply w-full border-collapse text-sm my-3;
+}
+.prose-report th,
+.prose-report td {
+  @apply border border-slate-200 px-2 py-1 text-left;
+}
+.prose-report th {
+  @apply bg-slate-100;
+}
+.prose-report strong {
+  @apply font-semibold text-slate-900;
+}
+.prose-report a {
+  @apply text-brand-600 font-medium hover:underline;
+}
+.prose-report code {
+  @apply rounded bg-slate-100 px-1 py-0.5 text-xs text-slate-700;
+}

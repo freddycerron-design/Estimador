@@ -1,0 +1,14 @@
+{
+  "name": "estimador",
+  "private": true,
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev:backend": "pnpm --filter @estimador/backend dev",
+    "build:backend": "pnpm --filter @estimador/backend build",
+    "seed": "pnpm --filter @estimador/backend seed",
+    "dev:frontend": "pnpm --filter @estimador/frontend dev"
+  }
+}

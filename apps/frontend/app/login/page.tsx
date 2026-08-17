@@ -1,0 +1,66 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { useAuth } from "@/lib/auth-context";
+import { btnPrimary, input, label, card } from "@/lib/ui-classes";
+
+export default function LoginPage() {
+  const { signIn, signUp } = useAuth();
+  const router = useRouter();
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    const result = mode === "signin" ? await signIn(email, password) : await signUp(email, password, name);
+    setSubmitting(false);
+    if (result) {
+      setError(result);
+      return;
+    }
+    router.push("/estimate/new");
+  }
+
+  return (
+    <div className="mx-auto max-w-sm py-16">
+      <div className="mb-6 flex flex-col items-center text-center">
+        <Image src="/brand/proyectia-logo.jpg" alt="ProyecTIA" width={160} height={160} className="mb-3 h-28 w-28 rounded-2xl object-contain" priority />
+        <h1 className="text-xl font-bold text-slate-900">{mode === "signin" ? "Iniciar sesión" : "Crear cuenta"}</h1>
+        <p className="mt-1 text-sm text-slate-500">IA que estima. Datos que deciden. Proyectos que suceden.</p>
+      </div>
+      <div className={`${card} p-6`}>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {mode === "signup" && (
+            <div>
+              <label className={label}>Nombre</label>
+              <input value={name} onChange={(e) => setName(e.target.value)} className={input} required />
+            </div>
+          )}
+          <div>
+            <label className={label}>Email</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={input} required />
+          </div>
+          <div>
+            <label className={label}>Contraseña</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className={input} minLength={6} required />
+          </div>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <button type="submit" disabled={submitting} className={`${btnPrimary} w-full justify-center`}>
+            {submitting ? "…" : mode === "signin" ? "Entrar" : "Crear cuenta"}
+          </button>
+        </form>
+      </div>
+      <button onClick={() => setMode(mode === "signin" ? "signup" : "signin")} className="mt-4 w-full text-center text-sm text-brand-600 hover:underline">
+        {mode === "signin" ? "¿No tienes cuenta? Crear una" : "¿Ya tienes cuenta? Inicia sesión"}
+      </button>
+    </div>
+  );
+}
