@@ -274,10 +274,23 @@ function SkillCard({ skill, onChanged }: { skill: SkillDTO; onChanged: () => voi
         </h4>
         {skill.activeVersion ? (
           Object.keys(skill.activeVersion.definition ?? {}).length === 0 ? (
-            <p className="text-sm text-slate-400">
-              Sin parámetros configurados — esta versión no fija ninguna parametrización, la skill corre con su lógica/valores por defecto
-              internos.
-            </p>
+            skill.configSchema.length > 0 ? (
+              <div className="space-y-1">
+                <p className="text-sm text-slate-400">Sin override guardado — corre con los defaults internos de la skill:</p>
+                <ul className="space-y-0.5 text-xs text-slate-600">
+                  {skill.configSchema.map((p) => (
+                    <li key={p.key}>
+                      <code className="rounded bg-slate-100 px-1 py-0.5">{p.key}</code> = <span className="font-medium">{String(p.default)}</span>{" "}
+                      — {p.description}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p className="text-sm text-slate-400">
+                Sin parámetros configurados — esta skill no lee ningún valor de <code>config</code>, corre con su lógica interna fija.
+              </p>
+            )
           ) : (
             <>
               <pre className="max-h-40 overflow-auto rounded-md bg-slate-50 p-2 text-xs text-slate-700">

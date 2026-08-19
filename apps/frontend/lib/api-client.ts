@@ -433,6 +433,12 @@ export interface SkillVersionDTO {
   note: string | null;
 }
 
+export interface SkillConfigParamDTO {
+  key: string;
+  description: string;
+  default: unknown;
+}
+
 export interface SkillDTO {
   id: string;
   key: string;
@@ -440,6 +446,8 @@ export interface SkillDTO {
   description: string | null;
   versionCount: number;
   activeVersion: SkillVersionDTO | null;
+  /** Parámetros que la skill realmente lee de su config (metadata, ver skills/config-registry.ts en el backend). */
+  configSchema: SkillConfigParamDTO[];
 }
 
 export function listSkills() {

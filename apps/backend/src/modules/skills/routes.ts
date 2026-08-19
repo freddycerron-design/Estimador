@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db, unwrap, unwrapNullable } from "../../db/insforge-client.js";
 import type { SkillRow, SkillVersionRow } from "../../db/types.js";
 import { requireAdmin } from "../../plugins/require-admin.js";
+import { SKILL_CONFIG_REGISTRY } from "../../skills/config-registry.js";
 
 // `config` es la parametrización jsonb de la skill (spec §21/§25) — el shape exacto varía por
 // skill (ver `ctx.config.*` en cada `skills/<key>/index.ts`), así que solo exigimos que sea un
@@ -25,7 +26,7 @@ export default async function skillsRoutes(app: FastifyInstance) {
     return skills.map((skill) => {
       const skillVersions = versions.filter((v) => v.skill_id === skill.id);
       const active = skillVersions.find((v) => v.status === "active") ?? null;
-      return { ...skill, versionCount: skillVersions.length, activeVersion: active };
+      return { ...skill, versionCount: skillVersions.length, activeVersion: active, configSchema: SKILL_CONFIG_REGISTRY[skill.key] ?? [] };
     });
   });
 
@@ -41,7 +42,7 @@ export default async function skillsRoutes(app: FastifyInstance) {
       `select:skill_versions:${skillKey}`,
       db.from("skill_versions").select().eq("skill_id", skill.id).order("version", { ascending: false })
     );
-    return { skill, versions };
+    return { skill: { ...skill, configSchema: SKILL_CONFIG_REGISTRY[skill.key] ?? [] }, versions };
   });
 
   // Crea una nueva versión y la activa de inmediato, desactivando la que estaba activa —

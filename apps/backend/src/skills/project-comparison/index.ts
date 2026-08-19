@@ -29,8 +29,9 @@ export const projectComparisonSkill = defineSkill<
   toolName: "compare_to_reference_project",
   description: "Explica las diferencias principales entre el requerimiento actual y un proyecto histórico de referencia.",
   inputSchema: zodToJsonSchema(InputSchema) as any,
-  async execute(input) {
+  async execute(input, ctx) {
     const { projectId, requirement } = InputSchema.parse(input);
+    const userDeltaThresholdPct = (ctx.config.userDeltaThresholdPct as number | undefined) ?? 15;
     const [project] = await unwrap<ProjectRow[]>("select:projects:one", db.from("projects").select().eq("id", projectId));
     const features = await unwrap<ProjectFeatureRow[]>("select:project_features:one", db.from("project_features").select().eq("project_id", projectId));
     if (!project) return { differences: [] };
@@ -45,7 +46,7 @@ export const projectComparisonSkill = defineSkill<
 
     if (requirement.numUsers !== null && candNumUsers !== null && candNumUsers > 0) {
       const deltaPct = Math.round(((requirement.numUsers - candNumUsers) / candNumUsers) * 100);
-      if (Math.abs(deltaPct) >= 15) {
+      if (Math.abs(deltaPct) >= userDeltaThresholdPct) {
         differences.push(`El nuevo proyecto tiene ${deltaPct > 0 ? `${deltaPct}% más` : `${Math.abs(deltaPct)}% menos`} usuarios que ${project.name}.`);
       }
     }
