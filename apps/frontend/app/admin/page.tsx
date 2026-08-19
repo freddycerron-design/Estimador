@@ -268,6 +268,22 @@ function SkillCard({ skill, onChanged }: { skill: SkillDTO; onChanged: () => voi
         </button>
       </div>
 
+      <div className="mt-3">
+        <h4 className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-400">
+          Config activa {skill.activeVersion ? `(v${skill.activeVersion.version})` : ""}
+        </h4>
+        {skill.activeVersion ? (
+          <>
+            <pre className="max-h-40 overflow-auto rounded-md bg-slate-50 p-2 text-xs text-slate-700">
+              {JSON.stringify(skill.activeVersion.definition, null, 2)}
+            </pre>
+            {skill.activeVersion.note && <p className="mt-1 text-xs text-slate-400">Nota: {skill.activeVersion.note}</p>}
+          </>
+        ) : (
+          <p className="text-sm text-slate-400">Sin versión activa.</p>
+        )}
+      </div>
+
       {expanded && (
         <div className="mt-4 space-y-4 border-t border-slate-100 pt-4">
           <div>
@@ -291,7 +307,7 @@ function SkillCard({ skill, onChanged }: { skill: SkillDTO; onChanged: () => voi
           </div>
 
           <div>
-            <label className={label}>Config (JSON) de la nueva versión</label>
+            <label className={label}>Config (JSON) para la nueva versión — precargado con la versión activa, edítalo antes de activar</label>
             <textarea
               value={configDraft}
               onChange={(e) => setConfigDraft(e.target.value)}
