@@ -273,12 +273,19 @@ function SkillCard({ skill, onChanged }: { skill: SkillDTO; onChanged: () => voi
           Config activa {skill.activeVersion ? `(v${skill.activeVersion.version})` : ""}
         </h4>
         {skill.activeVersion ? (
-          <>
-            <pre className="max-h-40 overflow-auto rounded-md bg-slate-50 p-2 text-xs text-slate-700">
-              {JSON.stringify(skill.activeVersion.definition, null, 2)}
-            </pre>
-            {skill.activeVersion.note && <p className="mt-1 text-xs text-slate-400">Nota: {skill.activeVersion.note}</p>}
-          </>
+          Object.keys(skill.activeVersion.definition ?? {}).length === 0 ? (
+            <p className="text-sm text-slate-400">
+              Sin parámetros configurados — esta versión no fija ninguna parametrización, la skill corre con su lógica/valores por defecto
+              internos.
+            </p>
+          ) : (
+            <>
+              <pre className="max-h-40 overflow-auto rounded-md bg-slate-50 p-2 text-xs text-slate-700">
+                {JSON.stringify(skill.activeVersion.definition, null, 2)}
+              </pre>
+              {skill.activeVersion.note && <p className="mt-1 text-xs text-slate-400">Nota: {skill.activeVersion.note}</p>}
+            </>
+          )
         ) : (
           <p className="text-sm text-slate-400">Sin versión activa.</p>
         )}
