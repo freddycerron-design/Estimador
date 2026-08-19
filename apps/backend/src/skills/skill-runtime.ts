@@ -1,6 +1,8 @@
+import type { EstimationParameters } from "@estimador/shared-types";
 import { db, unwrap, unwrapNullable } from "../db/insforge-client.js";
 import type { SkillRow, SkillVersionRow } from "../db/types.js";
 import { loadSystemSettings } from "../config/system-settings.js";
+import { applyParameterOverrides } from "../config/estimation-parameters.js";
 import { createOrchestratorProvider, createEmbeddingProvider } from "../llm/provider-factory.js";
 import type { SkillContext } from "./types.js";
 
@@ -26,7 +28,13 @@ export async function loadActiveSkillConfig(skillKey: string): Promise<Record<st
 
 let cachedSettings: Record<string, unknown> | null = null;
 
-export async function buildSkillContext(skillKey: string): Promise<SkillContext> {
+/**
+ * `parameterOverrides` es `conversations.parameters` de la conversación actual (ya resuelto por
+ * el caller, típicamente una vez por turno) — si trae alguna clave con `included:true`, esa
+ * clave reemplaza al global SOLO para el `settings` devuelto acá, sin mutar `cachedSettings`
+ * (que sigue siendo el global compartido por todo el proceso).
+ */
+export async function buildSkillContext(skillKey: string, parameterOverrides?: EstimationParameters | null): Promise<SkillContext> {
   // Los system_settings cambian poco; cachear por proceso evita una query por cada tool-call.
   if (!cachedSettings) cachedSettings = await loadSystemSettings();
   const config = await loadActiveSkillConfig(skillKey);
@@ -36,7 +44,7 @@ export async function buildSkillContext(skillKey: string): Promise<SkillContext>
   return {
     embed: (text: string) => embedder.embed(text),
     llm,
-    settings: cachedSettings,
+    settings: applyParameterOverrides(cachedSettings, parameterOverrides),
     config,
   };
 }

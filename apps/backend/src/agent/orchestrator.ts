@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import type { EstimationParameters } from "@estimador/shared-types";
 import type { LlmMessage, LlmContentBlock } from "../llm/types.js";
 import { createOrchestratorProvider } from "../llm/provider-factory.js";
 import { toolDefinitions, dispatchTool, skillKeyForToolName } from "./tool-registry.js";
@@ -6,6 +7,7 @@ import { buildSkillContext } from "../skills/skill-runtime.js";
 import { buildSystemPrompt } from "./system-prompt.js";
 import { assembleBundleFromTrace } from "./bundle-assembler.js";
 import { persistEstimate } from "./estimate-persistence.js";
+import { resolveEffectiveParameters } from "../config/estimation-parameters.js";
 
 export interface ToolTraceEntry {
   toolCallId: string;
@@ -34,6 +36,8 @@ export async function runAgentTurn(params: {
   history: LlmMessage[]; // incluye ya el mensaje del usuario para este turno
   conversationId: string;
   maxToolIterations?: number;
+  /** Parámetros de estimación marcados por el usuario al iniciar esta conversación (conversations.parameters). */
+  parameters?: EstimationParameters | null;
 }): Promise<AgentTurnResult> {
   const llm = createOrchestratorProvider();
   const tools = toolDefinitions();
@@ -67,7 +71,7 @@ export async function runAgentTurn(params: {
       try {
         const skillKey = skillKeyForToolName(call.name);
         if (!skillKey) throw new Error(`Tool sin skill asociada: ${call.name}`);
-        const ctx = await buildSkillContext(skillKey);
+        const ctx = await buildSkillContext(skillKey, params.parameters);
 
         // generate_report NO confía en que el LLM reconstruya el bundle completo desde su
         // memoria de conversación (frágil, ver bundle-assembler.ts) — el backend lo ensambla
@@ -95,7 +99,10 @@ export async function runAgentTurn(params: {
           toolInput = { template, bundle };
           // Persistir la estimación ahora que existe el bundle completo — de lo contrario
           // nunca queda nada en project_estimates para feedback/actuals/aprendizaje futuro.
-          const estimateId = await persistEstimate(params.conversationId, template, bundle);
+          // `ctx.settings` de report-generation ya trae el merge (global + overrides) aplicado
+          // por buildSkillContext — congelamos ese mismo snapshot, no solo la intención del usuario.
+          const effectiveParameters = resolveEffectiveParameters(ctx.settings, params.parameters);
+          const estimateId = await persistEstimate(params.conversationId, template, bundle, effectiveParameters);
           extraOutputFields = { estimateId };
         }
 

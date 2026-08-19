@@ -1,4 +1,5 @@
 import { getValidAccessToken } from "./token-manager";
+import type { EstimationParameters } from "./estimation-parameters";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 
@@ -31,10 +32,12 @@ export interface ConversationDTO {
   title: string | null;
   status: string;
   created_at: string;
+  parameters?: EstimationParameters | null;
 }
 
-export function createConversation(title?: string, requirementId?: string) {
-  return apiFetch<ConversationDTO>("/conversations", { method: "POST", body: JSON.stringify({ title, requirementId }) });
+/** `parameters`: los parámetros de estimación marcados/editados en el panel previo al chat (spec pedido por usuario) — opcional, si se omite se usa el default global de siempre. */
+export function createConversation(title?: string, requirementId?: string, parameters?: EstimationParameters) {
+  return apiFetch<ConversationDTO>("/conversations", { method: "POST", body: JSON.stringify({ title, requirementId, parameters }) });
 }
 
 // --- Usuario actual (para saber si mostrar la sección de Administración) ---

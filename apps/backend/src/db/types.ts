@@ -1,4 +1,4 @@
-import type { Provenance, VersionedEntityStatus, LearningProposalStatus, ConversationStatus } from "@estimador/shared-types";
+import type { Provenance, VersionedEntityStatus, LearningProposalStatus, ConversationStatus, EstimationParameters } from "@estimador/shared-types";
 
 /**
  * Espejo manual (TS) del schema SQL en `db/sql/*.sql`. No hay ORM/generación automática:
@@ -85,6 +85,8 @@ export interface ConversationRow {
   requirement_id: string | null;
   created_at: string;
   updated_at: string;
+  /** Parámetros de estimación que el usuario marcó/editó al iniciar esta conversación (intención). Null si no se personalizó ninguno. */
+  parameters: EstimationParameters | null;
 }
 
 export interface RequirementRow {
@@ -164,6 +166,8 @@ export interface ProjectEstimateRow {
   risks: string[] | null;
   recommendations: string[] | null;
   created_at: string;
+  /** Snapshot de los 5 parámetros de estimación EFECTIVAMENTE usados (merge final override+global) — congelado para trazabilidad y para precargar "Refinar estimación". */
+  parameters: EstimationParameters | null;
 }
 
 export interface EstimateLineItemRow {

@@ -1,15 +1,22 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { EstimationParametersSchema } from "@estimador/shared-types";
 import { createConversation, getConversation, listMessages, sendMessage } from "../../conversation/conversation-service.js";
 import { db, unwrap } from "../../db/insforge-client.js";
 
-const CreateConversationBody = z.object({ title: z.string().optional(), requirementId: z.string().uuid().optional() });
+const CreateConversationBody = z.object({
+  title: z.string().optional(),
+  requirementId: z.string().uuid().optional(),
+  // Parámetros de estimación marcados/editados por el usuario en el panel previo al chat
+  // (spec pedido por usuario) — opcional, si no viene la conversación usa el default global.
+  parameters: EstimationParametersSchema.optional(),
+});
 const SendMessageBody = z.object({ text: z.string().min(1) });
 
 export default async function conversationsRoutes(app: FastifyInstance) {
   app.post("/conversations", async (req, reply) => {
     const body = CreateConversationBody.parse(req.body ?? {});
-    const conversation = await createConversation(req.userId, body.title, body.requirementId);
+    const conversation = await createConversation(req.userId, body.title, body.requirementId, body.parameters);
     reply.code(201);
     return conversation;
   });

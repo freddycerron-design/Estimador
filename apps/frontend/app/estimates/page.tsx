@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { FileText, ArrowRight } from "lucide-react";
+import { FileText, ArrowRight, RefreshCw } from "lucide-react";
 import { RequireAuth } from "@/components/require-auth";
 import { PageHeader } from "@/components/page-header";
 import { card } from "@/lib/ui-classes";
@@ -59,9 +59,21 @@ function EstimatesList() {
                   </td>
                   <td className="px-4 py-3 text-xs text-slate-400">{new Date(e.created_at).toLocaleDateString()}</td>
                   <td className="px-4 py-3">
-                    <Link href={`/estimate/${e.id}`} className="inline-flex items-center gap-1 font-medium text-brand-600 hover:underline">
-                      Ver <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
-                    </Link>
+                    <div className="flex items-center gap-3">
+                      <Link href={`/estimate/${e.id}`} className="inline-flex items-center gap-1 font-medium text-brand-600 hover:underline">
+                        Ver <ArrowRight className="h-3.5 w-3.5" strokeWidth={2} />
+                      </Link>
+                      {/* Refinamiento (spec pedido por usuario): arranca una estimación nueva precargando
+                          los parámetros (y descripción original, si aplica) de esta estimación. */}
+                      <Link
+                        href={`/estimate/new?refineFrom=${e.id}`}
+                        className="inline-flex items-center gap-1 font-medium text-slate-500 hover:text-brand-600 hover:underline"
+                        title="Iniciar una nueva estimación a partir de esta, reutilizando sus parámetros"
+                      >
+                        <RefreshCw className="h-3.5 w-3.5" strokeWidth={2} />
+                        Refinar estimación
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               );

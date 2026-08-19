@@ -1,4 +1,4 @@
-import type { ConversationStatus } from "@estimador/shared-types";
+import type { ConversationStatus, EstimationParameters } from "@estimador/shared-types";
 import { db, unwrap, unwrapNullable } from "../db/insforge-client.js";
 import type { ConversationRow, MessageRow } from "../db/types.js";
 import { runAgentTurn, userMessage, type ToolTraceEntry } from "../agent/orchestrator.js";
@@ -15,12 +15,26 @@ export interface SendMessageResult {
   estimateId?: string;
 }
 
-export async function createConversation(userId: string, title?: string, requirementId?: string): Promise<ConversationRow> {
+export async function createConversation(
+  userId: string,
+  title?: string,
+  requirementId?: string,
+  parameters?: EstimationParameters
+): Promise<ConversationRow> {
   const [conversation] = await unwrap<ConversationRow[]>(
     "insert:conversations",
     db
       .from("conversations")
-      .insert([{ user_id: userId, title: title ?? null, status: "NEW", context: {}, requirement_id: requirementId ?? null }])
+      .insert([
+        {
+          user_id: userId,
+          title: title ?? null,
+          status: "NEW",
+          context: {},
+          requirement_id: requirementId ?? null,
+          parameters: parameters ?? null,
+        },
+      ])
       .select()
   );
   if (!conversation) throw new Error("No se pudo crear la conversación");
@@ -71,7 +85,7 @@ export async function sendMessage(conversationId: string, userText: string): Pro
     db.from("messages").insert([{ conversation_id: conversationId, ...toDbMessage(newUserMessage) }]).select()
   );
 
-  const turn = await runAgentTurn({ history: fullHistory, conversationId });
+  const turn = await runAgentTurn({ history: fullHistory, conversationId, parameters: conversation.parameters });
 
   const rowsToInsert = turn.newMessages.map((msg) => ({ conversation_id: conversationId, ...toDbMessage(msg) }));
   if (rowsToInsert.length > 0) {

@@ -1,4 +1,4 @@
-import type { EstimationBundle } from "@estimador/shared-types";
+import type { EstimationBundle, EstimationParameters } from "@estimador/shared-types";
 import { db, unwrap } from "../db/insforge-client.js";
 
 /**
@@ -10,7 +10,8 @@ import { db, unwrap } from "../db/insforge-client.js";
 export async function persistEstimate(
   conversationId: string,
   template: string,
-  bundle: EstimationBundle
+  bundle: EstimationBundle,
+  parameters: EstimationParameters
 ): Promise<string> {
   // El proyecto NUEVO que se está estimando también necesita su propia fila en `projects`
   // (status='active_estimate') — sin esto no hay dónde enganchar `project_actuals` cuando
@@ -75,6 +76,9 @@ export async function persistEstimate(
           skill_versions_used: null, // TODO: propagar ids de skill_versions activas usadas (Fase 9, Learning Agent)
           risks: bundle.risks,
           recommendations: bundle.recommendations,
+          // Snapshot de los 5 parámetros de estimación efectivamente usados (merge final override+global)
+          // — congelado con trazabilidad real, para feedback futuro y para precargar "Refinar estimación".
+          parameters,
         },
       ])
       .select("id")
