@@ -418,3 +418,38 @@ export interface RoleDTO {
 export function listRoles() {
   return apiFetch<RoleDTO[]>(`/admin/config/roles`);
 }
+
+// --- Administración de Skills ---
+export interface SkillVersionDTO {
+  id: string;
+  skill_id: string;
+  version: number;
+  definition: Record<string, unknown>;
+  status: string;
+  created_by: string | null;
+  approved_by: string | null;
+  activated_at: string | null;
+  created_at: string;
+  note: string | null;
+}
+
+export interface SkillDTO {
+  id: string;
+  key: string;
+  display_name: string;
+  description: string | null;
+  versionCount: number;
+  activeVersion: SkillVersionDTO | null;
+}
+
+export function listSkills() {
+  return apiFetch<SkillDTO[]>(`/admin/skills`);
+}
+
+export function listSkillVersions(skillKey: string) {
+  return apiFetch<{ skill: Omit<SkillDTO, "versionCount" | "activeVersion">; versions: SkillVersionDTO[] }>(`/admin/skills/${skillKey}/versions`);
+}
+
+export function createSkillVersion(skillKey: string, config: Record<string, unknown>, note?: string) {
+  return apiFetch<SkillVersionDTO>(`/admin/skills/${skillKey}/versions`, { method: "POST", body: JSON.stringify({ config, note }) });
+}

@@ -73,6 +73,7 @@ export interface SkillVersionRow {
   approved_by: string | null;
   activated_at: string | null;
   created_at: string;
+  note: string | null;
 }
 
 export interface ConversationRow {
