@@ -124,11 +124,7 @@ function ChatUI() {
           const form = emptyEstimationParameterForm();
           for (const key of ESTIMATION_PARAMETER_KEYS) {
             const raw = byKey.get(key);
-            // Por defecto seleccionados (included:true) en una estimación nueva — el usuario ve
-            // los 5 parámetros ya marcados con el valor global vigente, y puede desmarcar/editar
-            // el que no quiera aplicar. En refinamiento no se toca este default (arriba precarga
-            // tal como quedó marcado en la estimación anterior, eso sigue igual).
-            form[key] = { included: true, value: typeof raw === "number" ? raw : ESTIMATION_PARAMETER_FALLBACKS[key] };
+            form[key] = { included: false, value: typeof raw === "number" ? raw : ESTIMATION_PARAMETER_FALLBACKS[key] };
           }
           if (!cancelled) setParamForm(form);
         }
