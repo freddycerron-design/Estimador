@@ -32,9 +32,9 @@ export default function LoginPage() {
   return (
     <div className="mx-auto max-w-sm py-16">
       <div className="mb-6 flex flex-col items-center text-center">
-        <Image src="/brand/proyectia-logo.jpg" alt="ProyecTIA" width={160} height={160} className="mb-3 h-28 w-28 rounded-2xl object-contain" priority />
+        <Image src="/brand/estimadora-logo.jpg" alt="EstimaDORA IA" width={160} height={160} className="mb-3 h-28 w-28 rounded-2xl object-contain" priority />
         <h1 className="font-display text-xl font-semibold tracking-tight text-slate-900">{mode === "signin" ? "Iniciar sesión" : "Crear cuenta"}</h1>
-        <p className="mt-1 text-sm text-slate-500">IA que estima. Datos que deciden. Proyectos que suceden.</p>
+        <p className="mt-1 text-sm text-slate-500">Tu asistente inteligente para estimar proyectos de TI.</p>
       </div>
       <div className={`${card} p-6`}>
         <form onSubmit={handleSubmit} className="space-y-4">

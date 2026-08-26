@@ -9,7 +9,7 @@ const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], weight: ["500", "600", 
 const inter = Inter({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-body" });
 
 export const metadata: Metadata = {
-  title: "ProyecTIA — IA que estima. Datos que deciden. Proyectos que suceden.",
+  title: "EstimaDORA IA — Tu asistente inteligente para estimar proyectos de TI.",
   description: "Agente de estimación de proyectos de TI basado en evidencia histórica",
 };
 

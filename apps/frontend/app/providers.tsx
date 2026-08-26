@@ -34,11 +34,11 @@ function NavBar() {
         <Link href="/" className="flex items-center gap-2.5">
           <div
             className="h-8 w-8 shrink-0 rounded-lg bg-white shadow-sm"
-            style={{ backgroundImage: "url(/brand/proyectia-logo.jpg)", backgroundSize: "230% auto", backgroundPosition: "50% 18%" }}
+            style={{ backgroundImage: "url(/brand/estimadora-logo.jpg)", backgroundSize: "cover", backgroundPosition: "center" }}
           />
           <span className="font-display text-base font-semibold tracking-tight">
-            <span className="text-white">Proyec</span>
-            <span className="text-brand-400">TIA</span>
+            <span className="text-white">Estima</span>
+            <span className="text-brand-400">DORA</span>
           </span>
         </Link>
         {!loading && user && (
