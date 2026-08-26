@@ -10,13 +10,16 @@ const CreateConversationBody = z.object({
   // Parámetros de estimación marcados/editados por el usuario en el panel previo al chat
   // (spec pedido por usuario) — opcional, si no viene la conversación usa el default global.
   parameters: EstimationParametersSchema.optional(),
+  // Roles a incluir en el desglose de esfuerzo (spec pedido por usuario) — opcional, si no
+  // viene o llega vacío no se filtra (comportamiento actual, todos los roles).
+  includedRoleIds: z.array(z.string().uuid()).optional(),
 });
 const SendMessageBody = z.object({ text: z.string().min(1) });
 
 export default async function conversationsRoutes(app: FastifyInstance) {
   app.post("/conversations", async (req, reply) => {
     const body = CreateConversationBody.parse(req.body ?? {});
-    const conversation = await createConversation(req.userId, body.title, body.requirementId, body.parameters);
+    const conversation = await createConversation(req.userId, body.title, body.requirementId, body.parameters, body.includedRoleIds);
     reply.code(201);
     return conversation;
   });

@@ -18,11 +18,14 @@ import {
   listSystemSettings,
   getEstimate,
   getProject,
+  listRoles,
+  type RoleDTO,
 } from "@/lib/api-client";
 import {
   ESTIMATION_PARAMETER_KEYS,
   ESTIMATION_PARAMETER_LABELS,
   ESTIMATION_PARAMETER_FALLBACKS,
+  ESTIMATION_PARAMETER_PERCENT_KEYS,
   emptyEstimationParameterForm,
   type EstimationParameterEntry,
   type EstimationParameterKey,
@@ -61,6 +64,11 @@ function ChatUI() {
   const [paramsLoading, setParamsLoading] = useState(!urlConversationId);
   const [paramsError, setParamsError] = useState<string | null>(null);
   const [paramForm, setParamForm] = useState<ParameterForm>(emptyEstimationParameterForm());
+  // Roles a incluir en el desglose de esta estimación (spec pedido por usuario, junto a los
+  // parámetros) — arrancan TODOS marcados (comportamiento actual, sin filtrar) salvo que se
+  // esté refinando una estimación anterior que haya excluido alguno.
+  const [roles, setRoles] = useState<RoleDTO[]>([]);
+  const [includedRoleIds, setIncludedRoleIds] = useState<Set<string>>(new Set());
   const [confirming, setConfirming] = useState(false);
   // Al refinar, si la estimación anterior tiene el proyecto con su descripción original, se
   // precarga como punto de partida del chat (mejora natural del refinamiento, no bloqueante).
@@ -98,6 +106,9 @@ function ChatUI() {
     setParamsError(null);
     (async () => {
       try {
+        const allRoles = await listRoles();
+        if (!cancelled) setRoles(allRoles);
+
         if (refineFromId) {
           const { estimate } = await getEstimate(refineFromId);
           const source = (estimate.parameters as EstimationParameters | null | undefined) ?? null;
@@ -108,6 +119,11 @@ function ChatUI() {
             if (entry) form[key] = { included: entry.included, value: entry.value };
           }
           if (!cancelled) setParamForm(form);
+
+          // Roles usados la vez anterior — si la estimación es de antes de esta funcionalidad
+          // (included_role_ids null), se asume que no se filtró ningún rol: todos marcados.
+          const previousRoleIds = estimate.included_role_ids as string[] | null | undefined;
+          if (!cancelled) setIncludedRoleIds(new Set(previousRoleIds && previousRoleIds.length > 0 ? previousRoleIds : allRoles.map((r) => r.id)));
 
           const projectId = estimate.project_id as string | null | undefined;
           if (projectId) {
@@ -127,6 +143,7 @@ function ChatUI() {
             form[key] = { included: false, value: typeof raw === "number" ? raw : ESTIMATION_PARAMETER_FALLBACKS[key] };
           }
           if (!cancelled) setParamForm(form);
+          if (!cancelled) setIncludedRoleIds(new Set(allRoles.map((r) => r.id))); // todos incluidos por defecto, sin filtrar
         }
       } catch (err) {
         if (!cancelled) setParamsError(err instanceof Error ? err.message : "No se pudieron cargar los parámetros de estimación");
@@ -158,8 +175,9 @@ function ChatUI() {
     setError(null);
     try {
       const parameters: EstimationParameters = paramForm;
+      const roleIds = Array.from(includedRoleIds);
       if (urlRequirementId) {
-        const conv = await createConversation("Estimación desde requerimiento", urlRequirementId, parameters);
+        const conv = await createConversation("Estimación desde requerimiento", urlRequirementId, parameters, roleIds);
         setConversationId(conv.id);
         setParamsConfirmed(true);
         router.replace(`/estimate/new?c=${conv.id}`);
@@ -173,7 +191,7 @@ function ChatUI() {
         setSending(false);
       } else {
         const title = refineFromId ? "Refinamiento de estimación" : "Nueva estimación";
-        const conv = await createConversation(title, undefined, parameters);
+        const conv = await createConversation(title, undefined, parameters, roleIds);
         setConversationId(conv.id);
         setParamsConfirmed(true);
         router.replace(`/estimate/new?c=${conv.id}`);
@@ -231,6 +249,15 @@ function ChatUI() {
     setParamForm((f) => ({ ...f, [key]: { ...f[key], ...patch } }));
   }
 
+  function toggleRole(roleId: string) {
+    setIncludedRoleIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(roleId)) next.delete(roleId);
+      else next.add(roleId);
+      return next;
+    });
+  }
+
   return (
     <div className="flex h-[calc(100vh-160px)] flex-col">
       <PageHeader
@@ -264,26 +291,54 @@ function ChatUI() {
             ) : (
               <>
                 <div className="space-y-3">
-                  {ESTIMATION_PARAMETER_KEYS.map((key) => (
-                    <div key={key} className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        checked={paramForm[key].included}
-                        onChange={(e) => updateParam(key, { included: e.target.checked })}
-                        className="h-4 w-4 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-400"
-                      />
-                      <label className="w-80 shrink-0 text-sm text-slate-600">{ESTIMATION_PARAMETER_LABELS[key]}</label>
-                      <input
-                        type="number"
-                        step="any"
-                        value={paramForm[key].value}
-                        disabled={!paramForm[key].included}
-                        onChange={(e) => updateParam(key, { value: Number(e.target.value) })}
-                        className={`${inputClass} max-w-[140px] disabled:bg-slate-50 disabled:text-slate-400`}
-                      />
-                    </div>
-                  ))}
+                  {ESTIMATION_PARAMETER_KEYS.map((key) => {
+                    const isPercent = ESTIMATION_PARAMETER_PERCENT_KEYS.has(key);
+                    return (
+                      <div key={key} className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={paramForm[key].included}
+                          onChange={(e) => updateParam(key, { included: e.target.checked })}
+                          className="h-4 w-4 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-400"
+                        />
+                        <label className="w-80 shrink-0 text-sm text-slate-600">{ESTIMATION_PARAMETER_LABELS[key]}</label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            step="any"
+                            value={isPercent ? paramForm[key].value * 100 : paramForm[key].value}
+                            disabled={!paramForm[key].included}
+                            onChange={(e) => updateParam(key, { value: isPercent ? Number(e.target.value) / 100 : Number(e.target.value) })}
+                            className={`${inputClass} max-w-[140px] disabled:bg-slate-50 disabled:text-slate-400 ${isPercent ? "pr-7" : ""}`}
+                          />
+                          {isPercent && <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-slate-400">%</span>}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
+
+                <div className="mt-5 border-t border-slate-100 pt-4">
+                  <h3 className="mb-1 text-sm font-medium text-slate-700">Roles a incluir en el desglose</h3>
+                  <p className="mb-3 text-xs text-slate-400">
+                    Desmarca los roles que no quieras que aparezcan en el esfuerzo por fase y rol de esta estimación. Si no desmarcas ninguno, se
+                    incluyen todos (comportamiento estándar).
+                  </p>
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {roles.map((role) => (
+                      <label key={role.id} className="flex items-center gap-2 text-sm text-slate-600">
+                        <input
+                          type="checkbox"
+                          checked={includedRoleIds.has(role.id)}
+                          onChange={() => toggleRole(role.id)}
+                          className="h-4 w-4 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-400"
+                        />
+                        {role.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
                 {paramsError && <p className="mt-3 text-sm text-red-600">{paramsError}</p>}
                 {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
                 <div className="mt-4 flex justify-end">

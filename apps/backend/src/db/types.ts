@@ -87,6 +87,8 @@ export interface ConversationRow {
   updated_at: string;
   /** Parámetros de estimación que el usuario marcó/editó al iniciar esta conversación (intención). Null si no se personalizó ninguno. */
   parameters: EstimationParameters | null;
+  /** Roles a incluir en el desglose de esfuerzo de esta conversación. Null = sin filtrar (todos, comportamiento actual). */
+  included_role_ids: string[] | null;
 }
 
 export interface RequirementRow {
@@ -168,6 +170,8 @@ export interface ProjectEstimateRow {
   created_at: string;
   /** Snapshot de los 5 parámetros de estimación EFECTIVAMENTE usados (merge final override+global) — congelado para trazabilidad y para precargar "Refinar estimación". */
   parameters: EstimationParameters | null;
+  /** Roles efectivamente incluidos en el desglose de esfuerzo. Null = sin filtrar (todos). */
+  included_role_ids: string[] | null;
 }
 
 export interface EstimateLineItemRow {

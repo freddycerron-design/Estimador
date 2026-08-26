@@ -16,6 +16,7 @@ import {
   computeConfidenceFactors,
   confidenceScoreFrom,
   toLineItems,
+  filterReferencesByRoles,
   type ReferenceActuals,
 } from "./estimation-engine.js";
 
@@ -32,10 +33,12 @@ const InputSchema = z.object({
   missingInformationCount: z.number().default(0),
   /** Tipo de proyecto del requerimiento — usado para aplicar reglas de ajuste aprendidas (spec §18-25), si existen. */
   projectType: z.string().nullable().optional(),
+  /** Roles a incluir en el desglose (conversations.included_role_ids) — null/vacío = todos, sin filtrar. */
+  includedRoleIds: z.array(z.string().uuid()).nullable().optional(),
 });
 
 export const estimationSkill = defineSkill<
-  { usableCandidates: SimilarityCandidate[]; missingInformationCount?: number; projectType?: string | null },
+  { usableCandidates: SimilarityCandidate[]; missingInformationCount?: number; projectType?: string | null; includedRoleIds?: string[] | null },
   EstimationOutput
 >({
   key: "estimation",
@@ -44,7 +47,7 @@ export const estimationSkill = defineSkill<
     "Calcula esfuerzo (horas por fase y rol), duración, rango (optimista/probable/pesimista) y nivel de confianza, ponderando por similitud las referencias históricas usables. Requiere que project-similarity ya haya determinado referencias por encima del umbral.",
   inputSchema: zodToJsonSchema(InputSchema) as any,
   async execute(input) {
-    const { usableCandidates } = InputSchema.parse(input);
+    const { usableCandidates, includedRoleIds } = InputSchema.parse(input);
     const missingInformationCount = input.missingInformationCount ?? 0;
 
     const projectIds = usableCandidates.map((c) => c.projectId);
@@ -76,7 +79,9 @@ export const estimationSkill = defineSkill<
       throw new Error("Ninguna referencia usable tiene datos de esfuerzo real (project_actuals) — no se puede estimar.");
     }
 
-    const byPhaseRole = weightedLineItems(references);
+    const filteredReferences = filterReferencesByRoles(references, includedRoleIds);
+
+    const byPhaseRole = weightedLineItems(filteredReferences);
     const lineItems = toLineItems(
       byPhaseRole,
       (id) => lookup.phasesById.get(id)?.name ?? id,
@@ -84,7 +89,7 @@ export const estimationSkill = defineSkill<
     );
 
     let probableHours = lineItems.reduce((sum, li) => sum + li.hours, 0);
-    const totals = references.map(totalHoursOfReference);
+    const totals = filteredReferences.map(totalHoursOfReference);
     const cv = coefficientOfVariation(totals);
 
     // Aplicar reglas de ajuste APROBADAS y ACTIVAS del Learning Agent para este tipo de
@@ -124,6 +129,10 @@ export const estimationSkill = defineSkill<
         : `Rango calculado a partir de la dispersión real de esfuerzo entre las ${references.length} referencias (coef. de variación ${(cv * 100).toFixed(0)}%).`,
     ];
     if (appliedRuleNote) assumptions.push(appliedRuleNote);
+    if (includedRoleIds && includedRoleIds.length > 0) {
+      const names = includedRoleIds.map((id) => lookup.rolesById.get(id)?.name ?? id).join(", ");
+      assumptions.push(`Se limitó el desglose a los roles seleccionados por el usuario para esta estimación: ${names}.`);
+    }
 
     return { lineItems, effortHoursRange, durationWeeksRange, confidenceScore, confidenceFactors, assumptions };
   },

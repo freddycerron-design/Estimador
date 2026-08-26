@@ -38,6 +38,8 @@ export async function runAgentTurn(params: {
   maxToolIterations?: number;
   /** Parámetros de estimación marcados por el usuario al iniciar esta conversación (conversations.parameters). */
   parameters?: EstimationParameters | null;
+  /** Roles a incluir en el desglose de esfuerzo (conversations.included_role_ids). Null/vacío = todos. */
+  includedRoleIds?: string[] | null;
 }): Promise<AgentTurnResult> {
   const llm = createOrchestratorProvider();
   const tools = toolDefinitions();
@@ -85,7 +87,7 @@ export async function runAgentTurn(params: {
         if (call.name === "estimate_effort_duration") {
           const lastAnalysis = [...toolTrace].reverse().find((t) => t.toolName === "analyze_requirement" && !t.error);
           const projectType = (lastAnalysis?.output as { projectType?: string | null } | undefined)?.projectType;
-          if (projectType) toolInput = { ...(call.input as object), projectType };
+          toolInput = { ...(call.input as object), ...(projectType ? { projectType } : {}), includedRoleIds: params.includedRoleIds ?? null };
         }
 
         if (call.name === "generate_report") {
@@ -102,7 +104,7 @@ export async function runAgentTurn(params: {
           // `ctx.settings` de report-generation ya trae el merge (global + overrides) aplicado
           // por buildSkillContext — congelamos ese mismo snapshot, no solo la intención del usuario.
           const effectiveParameters = resolveEffectiveParameters(ctx.settings, params.parameters);
-          const estimateId = await persistEstimate(params.conversationId, template, bundle, effectiveParameters);
+          const estimateId = await persistEstimate(params.conversationId, template, bundle, effectiveParameters, params.includedRoleIds ?? null);
           extraOutputFields = { estimateId };
         }
 

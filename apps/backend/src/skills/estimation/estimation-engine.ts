@@ -30,6 +30,24 @@ export function weightedLineItems(references: ReferenceActuals[]): Map<string, M
   return byPhaseRole;
 }
 
+/**
+ * Filtra los roles de cada referencia ANTES de ponderar (spec pedido por usuario: elegir qué
+ * roles participan en la estimación). Se aplica acá, no después sobre `lineItems`, para que la
+ * dispersión/confianza (`totalHoursOfReference`, coeficiente de variación) también reflejen solo
+ * los roles incluidos — comparar "horas totales con QA excluido" contra referencias que sí
+ * incluían QA sería una comparación inconsistente.
+ */
+export function filterReferencesByRoles(references: ReferenceActuals[], includedRoleIds: string[] | null | undefined): ReferenceActuals[] {
+  if (!includedRoleIds || includedRoleIds.length === 0) return references; // sin selección = sin filtrar, comportamiento actual
+  const included = new Set(includedRoleIds);
+  return references.map((ref) => ({
+    ...ref,
+    effortHours: Object.fromEntries(
+      Object.entries(ref.effortHours).map(([phaseId, roles]) => [phaseId, Object.fromEntries(Object.entries(roles).filter(([roleId]) => included.has(roleId)))])
+    ),
+  }));
+}
+
 export function totalHoursOfReference(ref: ReferenceActuals): number {
   let total = 0;
   for (const roles of Object.values(ref.effortHours)) {

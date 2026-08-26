@@ -22,12 +22,16 @@ export interface EstimationParameterEntry {
 export type EstimationParameters = Partial<Record<EstimationParameterKey, EstimationParameterEntry>>;
 
 export const ESTIMATION_PARAMETER_LABELS: Record<EstimationParameterKey, string> = {
-  MIN_SIMILARITY_THRESHOLD: "Umbral mínimo de similitud (0-1)",
+  MIN_SIMILARITY_THRESHOLD: "Umbral mínimo de similitud",
   MAX_ADAPTIVE_ITERATIONS: "Máx. iteraciones de preguntas adaptativas",
-  DEFAULT_CONTINGENCY_PCT: "Contingencia por defecto (0-1)",
-  DEFAULT_OVERHEAD_PCT: "Overhead por defecto (0-1)",
+  DEFAULT_CONTINGENCY_PCT: "Contingencia por defecto",
+  DEFAULT_OVERHEAD_PCT: "Overhead por defecto",
   OUTLIER_ZSCORE_THRESHOLD: "Umbral de outlier (score-Z modificado)",
 };
+
+// Claves que se guardan como fracción 0-1 pero se muestran/editan como % (0.25 -> "25") — mismo
+// criterio que /admin. El resto (iteraciones, z-score) se muestra tal cual, sin conversión.
+export const ESTIMATION_PARAMETER_PERCENT_KEYS = new Set<EstimationParameterKey>(["MIN_SIMILARITY_THRESHOLD", "DEFAULT_CONTINGENCY_PCT", "DEFAULT_OVERHEAD_PCT"]);
 
 /** Fallback si `/admin/config/system-settings` no trajera alguna clave — mismo default que `DEFAULT_SYSTEM_SETTINGS` en el backend. */
 export const ESTIMATION_PARAMETER_FALLBACKS: Record<EstimationParameterKey, number> = {

@@ -19,7 +19,8 @@ export async function createConversation(
   userId: string,
   title?: string,
   requirementId?: string,
-  parameters?: EstimationParameters
+  parameters?: EstimationParameters,
+  includedRoleIds?: string[] | null
 ): Promise<ConversationRow> {
   const [conversation] = await unwrap<ConversationRow[]>(
     "insert:conversations",
@@ -33,6 +34,7 @@ export async function createConversation(
           context: {},
           requirement_id: requirementId ?? null,
           parameters: parameters ?? null,
+          included_role_ids: includedRoleIds ?? null,
         },
       ])
       .select()
@@ -85,7 +87,12 @@ export async function sendMessage(conversationId: string, userText: string): Pro
     db.from("messages").insert([{ conversation_id: conversationId, ...toDbMessage(newUserMessage) }]).select()
   );
 
-  const turn = await runAgentTurn({ history: fullHistory, conversationId, parameters: conversation.parameters });
+  const turn = await runAgentTurn({
+    history: fullHistory,
+    conversationId,
+    parameters: conversation.parameters,
+    includedRoleIds: conversation.included_role_ids,
+  });
 
   const rowsToInsert = turn.newMessages.map((msg) => ({ conversation_id: conversationId, ...toDbMessage(msg) }));
   if (rowsToInsert.length > 0) {

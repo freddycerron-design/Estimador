@@ -33,11 +33,17 @@ export interface ConversationDTO {
   status: string;
   created_at: string;
   parameters?: EstimationParameters | null;
+  included_role_ids?: string[] | null;
 }
 
-/** `parameters`: los parámetros de estimación marcados/editados en el panel previo al chat (spec pedido por usuario) — opcional, si se omite se usa el default global de siempre. */
-export function createConversation(title?: string, requirementId?: string, parameters?: EstimationParameters) {
-  return apiFetch<ConversationDTO>("/conversations", { method: "POST", body: JSON.stringify({ title, requirementId, parameters }) });
+/**
+ * `parameters`: los parámetros de estimación marcados/editados en el panel previo al chat (spec
+ * pedido por usuario) — opcional, si se omite se usa el default global de siempre.
+ * `includedRoleIds`: roles a incluir en el desglose de esfuerzo — opcional, si se omite o llega
+ * vacío no se filtra (todos los roles, comportamiento actual).
+ */
+export function createConversation(title?: string, requirementId?: string, parameters?: EstimationParameters, includedRoleIds?: string[]) {
+  return apiFetch<ConversationDTO>("/conversations", { method: "POST", body: JSON.stringify({ title, requirementId, parameters, includedRoleIds }) });
 }
 
 // --- Usuario actual (para saber si mostrar la sección de Administración) ---
