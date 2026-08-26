@@ -49,11 +49,11 @@ function NavBar() {
                 <Link
                   key={href}
                   href={href}
-                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
                     active ? "bg-white/15 text-white" : "text-white/70 hover:bg-white/10 hover:text-white"
                   }`}
                 >
-                  <Icon className="h-3.5 w-3.5" strokeWidth={2} />
+                  <Icon className="h-[18px] w-[18px]" strokeWidth={2} />
                   {label}
                 </Link>
               );

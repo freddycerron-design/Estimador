@@ -4,7 +4,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
-import { Sparkles, Send, Plus, Hash, SlidersHorizontal } from "lucide-react";
+import { Sparkles, Send, Plus, Hash, SlidersHorizontal, Loader2 } from "lucide-react";
 import { RequireAuth } from "@/components/require-auth";
 import { PageHeader } from "@/components/page-header";
 import { btnPrimary, btnSecondary, cardPadded, input as inputClass } from "@/lib/ui-classes";
@@ -318,7 +318,7 @@ function ChatUI() {
         </div>
       ) : (
         <>
-          <div className="flex-1 space-y-4 overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex-1 space-y-4 overflow-y-auto rounded-xl border border-slate-200 bg-slate-100 p-4 shadow-inner">
             {loadingHistory && messages.length === 0 && <p className="text-sm text-slate-400">Cargando conversación…</p>}
             {!loadingHistory && messages.length === 0 && (
               <div className="flex h-full flex-col items-center justify-center text-center">
@@ -334,7 +334,7 @@ function ChatUI() {
             )}
             {messages.map((m, i) => (
               <div key={i} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
-                <div className={m.role === "user" ? "max-w-[80%] rounded-2xl rounded-tr-sm bg-brand-500 px-4 py-2 text-white shadow-sm" : "max-w-[90%] rounded-2xl rounded-tl-sm bg-slate-50 px-4 py-3"}>
+                <div className={m.role === "user" ? "max-w-[80%] rounded-2xl rounded-tr-sm bg-brand-500 px-4 py-2 text-white shadow-sm" : "max-w-[90%] rounded-2xl rounded-tl-sm bg-white px-4 py-3 shadow-sm"}>
                   {m.role === "user" ? (
                     <p className="whitespace-pre-line text-sm">{m.text}</p>
                   ) : (
@@ -354,12 +354,8 @@ function ChatUI() {
             ))}
             {sending && (
               <div className="flex justify-start">
-                <div className="flex items-center gap-2 rounded-2xl rounded-tl-sm bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                  <span className="flex gap-1">
-                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-accent-400 [animation-delay:-0.3s]" />
-                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-accent-400 [animation-delay:-0.15s]" />
-                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-accent-400" />
-                  </span>
+                <div className="flex items-center gap-2.5 rounded-2xl rounded-tl-sm bg-white px-4 py-3 text-sm text-slate-500 shadow-sm">
+                  <Loader2 className="h-4 w-4 shrink-0 animate-spin text-accent-500" strokeWidth={2.5} />
                   Analizando… esto puede tardar hasta un minuto (busca referencias, estima, calcula costos).
                 </div>
               </div>
