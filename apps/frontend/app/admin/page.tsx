@@ -26,15 +26,19 @@ import {
 } from "@/lib/api-client";
 
 const SETTING_LABELS: Record<string, string> = {
-  MIN_SIMILARITY_THRESHOLD: "Umbral mínimo de similitud (0-1)",
+  MIN_SIMILARITY_THRESHOLD: "Umbral mínimo de similitud",
   MAX_ADAPTIVE_ITERATIONS: "Máx. iteraciones de preguntas adaptativas",
-  DEFAULT_CONTINGENCY_PCT: "Contingencia por defecto (0-1)",
-  DEFAULT_OVERHEAD_PCT: "Overhead por defecto (0-1)",
+  DEFAULT_CONTINGENCY_PCT: "Contingencia por defecto",
+  DEFAULT_OVERHEAD_PCT: "Overhead por defecto",
   OUTLIER_ZSCORE_THRESHOLD: "Umbral de outlier (score-Z modificado)",
   MIN_SAMPLE_SIZE_FOR_PATTERN: "Muestra mínima para detectar un patrón (Learning Agent)",
-  PATTERN_VARIANCE_THRESHOLD_PCT: "Desviación mínima para considerar un patrón (%)",
-  PROPOSAL_IMPROVEMENT_THRESHOLD_PCT: "Mejora mínima para aprobar una propuesta (puntos %)",
+  PATTERN_VARIANCE_THRESHOLD_PCT: "Desviación mínima para considerar un patrón",
+  PROPOSAL_IMPROVEMENT_THRESHOLD_PCT: "Mejora mínima para aprobar una propuesta",
 };
+
+// Claves que se almacenan como fracción 0-1 pero se muestran/editan como % (0.25 -> "25").
+// El resto (conteos, z-score) se muestra tal cual, sin conversión.
+const PERCENT_KEYS = new Set(["MIN_SIMILARITY_THRESHOLD", "DEFAULT_CONTINGENCY_PCT", "DEFAULT_OVERHEAD_PCT", "PATTERN_VARIANCE_THRESHOLD_PCT", "PROPOSAL_IMPROVEMENT_THRESHOLD_PCT"]);
 
 const DIMENSION_LABELS: Record<string, string> = {
   functionality: "Funcionalidad",
@@ -54,7 +58,11 @@ function SettingsSection() {
   function reload() {
     listSystemSettings().then((rows) => {
       setSettings(rows);
-      setDrafts(Object.fromEntries(rows.map((r) => [r.key, JSON.stringify(r.value)])));
+      setDrafts(
+        Object.fromEntries(
+          rows.map((r) => [r.key, PERCENT_KEYS.has(r.key) && typeof r.value === "number" ? String(r.value * 100) : JSON.stringify(r.value)])
+        )
+      );
     });
   }
   useEffect(reload, []);
@@ -62,7 +70,8 @@ function SettingsSection() {
   async function handleSave(key: string) {
     setSavingKey(key);
     try {
-      const value = JSON.parse(drafts[key] ?? "null");
+      const raw = drafts[key] ?? "null";
+      const value = PERCENT_KEYS.has(key) ? Number(raw) / 100 : JSON.parse(raw);
       await updateSystemSetting(key, value);
       reload();
     } finally {
@@ -78,7 +87,14 @@ function SettingsSection() {
         {settings.map((s) => (
           <div key={s.key} className="flex items-center gap-3">
             <label className="w-80 shrink-0 text-sm text-slate-600">{SETTING_LABELS[s.key] ?? s.key}</label>
-            <input value={drafts[s.key] ?? ""} onChange={(e) => setDrafts((d) => ({ ...d, [s.key]: e.target.value }))} className={`${input} max-w-[140px]`} />
+            <div className="relative">
+              <input
+                value={drafts[s.key] ?? ""}
+                onChange={(e) => setDrafts((d) => ({ ...d, [s.key]: e.target.value }))}
+                className={`${input} max-w-[140px] ${PERCENT_KEYS.has(s.key) ? "pr-7" : ""}`}
+              />
+              {PERCENT_KEYS.has(s.key) && <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-slate-400">%</span>}
+            </div>
             <button onClick={() => handleSave(s.key)} disabled={savingKey === s.key} className="text-brand-600 hover:text-brand-700 disabled:opacity-50" title="Guardar">
               <Save className="h-4 w-4" strokeWidth={2} />
             </button>
@@ -95,20 +111,21 @@ function WeightsSection() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // El draft se guarda en % (0-100) para mostrar/editar — se convierte a fracción 0-1 recién al enviar al backend.
   function reload() {
     listSimilarityWeights().then((rows) => {
       setProfiles(rows);
       const active = rows.find((r) => r.is_active) ?? rows[0];
-      if (active) setDraft(Object.fromEntries(Object.entries(active.weights).map(([k, v]) => [k, String(v)])));
+      if (active) setDraft(Object.fromEntries(Object.entries(active.weights).map(([k, v]) => [k, String(Number(v) * 100)])));
     });
   }
   useEffect(reload, []);
 
-  const sum = Object.values(draft).reduce((s, v) => s + (Number(v) || 0), 0);
+  const sumPct = Object.values(draft).reduce((s, v) => s + (Number(v) || 0), 0);
 
   async function handleSave() {
     setError(null);
-    const weights = Object.fromEntries(Object.entries(draft).map(([k, v]) => [k, Number(v)]));
+    const weights = Object.fromEntries(Object.entries(draft).map(([k, v]) => [k, Number(v) / 100]));
     setSaving(true);
     try {
       await updateSimilarityWeights(weights);
@@ -123,26 +140,31 @@ function WeightsSection() {
   return (
     <div className={cardPadded}>
       <h2 className="mb-1 font-semibold text-slate-900">Pesos de similitud</h2>
-      <p className="mb-4 text-sm text-slate-500">Deben sumar 1.0. Cada cambio crea una nueva versión activa — nunca sobreescribe la anterior.</p>
+      <p className="mb-4 text-sm text-slate-500">Deben sumar 100%. Cada cambio crea una nueva versión activa — nunca sobreescribe la anterior.</p>
       <div className="grid gap-3 sm:grid-cols-2">
         {Object.keys(DIMENSION_LABELS).map((dim) => (
           <div key={dim} className="flex items-center gap-2">
             <label className="w-32 shrink-0 text-sm text-slate-600">{DIMENSION_LABELS[dim]}</label>
-            <input
-              value={draft[dim] ?? ""}
-              onChange={(e) => setDraft((d) => ({ ...d, [dim]: e.target.value }))}
-              className={`${input} max-w-[100px]`}
-              type="number"
-              step="0.01"
-              min="0"
-              max="1"
-            />
+            <div className="relative">
+              <input
+                value={draft[dim] ?? ""}
+                onChange={(e) => setDraft((d) => ({ ...d, [dim]: e.target.value }))}
+                className={`${input} max-w-[100px] pr-7`}
+                type="number"
+                step="1"
+                min="0"
+                max="100"
+              />
+              <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-slate-400">%</span>
+            </div>
           </div>
         ))}
       </div>
-      <p className={`mt-3 text-sm font-medium ${Math.abs(sum - 1) < 1e-6 ? "text-emerald-600" : "text-red-600"}`}>Suma actual: {sum.toFixed(2)} {Math.abs(sum - 1) >= 1e-6 && "(debe ser 1.00)"}</p>
+      <p className={`mt-3 text-sm font-medium ${Math.abs(sumPct - 100) < 1e-6 ? "text-emerald-600" : "text-red-600"}`}>
+        Suma actual: {sumPct.toFixed(0)}% {Math.abs(sumPct - 100) >= 1e-6 && "(debe ser 100%)"}
+      </p>
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-      <button onClick={handleSave} disabled={saving || Math.abs(sum - 1) >= 1e-6} className={`${btnPrimary} mt-3`}>
+      <button onClick={handleSave} disabled={saving || Math.abs(sumPct - 100) >= 1e-6} className={`${btnPrimary} mt-3`}>
         Guardar nueva versión
       </button>
       <p className="mt-3 text-xs text-slate-400">Versión activa: v{profiles.find((p) => p.is_active)?.version ?? "—"}</p>
