@@ -36,7 +36,7 @@ function NavBar() {
             className="h-8 w-8 shrink-0 rounded-lg bg-white shadow-sm"
             style={{ backgroundImage: "url(/brand/proyectia-logo.jpg)", backgroundSize: "230% auto", backgroundPosition: "50% 18%" }}
           />
-          <span className="text-base font-bold tracking-tight">
+          <span className="font-display text-base font-semibold tracking-tight">
             <span className="text-white">Proyec</span>
             <span className="text-brand-400">TIA</span>
           </span>

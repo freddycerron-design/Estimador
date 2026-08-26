@@ -33,7 +33,7 @@ export default function LoginPage() {
     <div className="mx-auto max-w-sm py-16">
       <div className="mb-6 flex flex-col items-center text-center">
         <Image src="/brand/proyectia-logo.jpg" alt="ProyecTIA" width={160} height={160} className="mb-3 h-28 w-28 rounded-2xl object-contain" priority />
-        <h1 className="text-xl font-bold text-slate-900">{mode === "signin" ? "Iniciar sesión" : "Crear cuenta"}</h1>
+        <h1 className="font-display text-xl font-semibold tracking-tight text-slate-900">{mode === "signin" ? "Iniciar sesión" : "Crear cuenta"}</h1>
         <p className="mt-1 text-sm text-slate-500">IA que estima. Datos que deciden. Proyectos que suceden.</p>
       </div>
       <div className={`${card} p-6`}>

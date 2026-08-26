@@ -9,6 +9,8 @@ build/
 .env.*.local
 .mcp.json
 .claude/
+.agents/
+skills-lock.json
 coverage/
 .DS_Store
 *.tsbuildinfo

@@ -45,7 +45,7 @@ export default function HomePage() {
   return (
     <RequireAuth>
       <div className="py-4">
-        <h1 className="mb-1 text-2xl font-bold text-slate-900">Hola{user?.name ? `, ${user.name}` : ""} 👋</h1>
+        <h1 className="mb-1 font-display text-2xl font-semibold tracking-tight text-slate-900">Hola{user?.name ? `, ${user.name}` : ""} 👋</h1>
         <p className="mb-8 text-slate-500">
           Estimador de proyectos de TI basado en evidencia histórica — no adivina, busca proyectos similares reales y te dice de dónde
           viene cada número.

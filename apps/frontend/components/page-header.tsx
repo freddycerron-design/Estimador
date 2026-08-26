@@ -18,7 +18,7 @@ export function PageHeader({
           <Icon className="h-5 w-5 text-accent-600" strokeWidth={2} />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-slate-900">{title}</h1>
+          <h1 className="font-display text-xl font-semibold tracking-tight text-slate-900">{title}</h1>
           {subtitle && <p className="mt-0.5 text-sm text-slate-500">{subtitle}</p>}
         </div>
       </div>

@@ -7,6 +7,7 @@ import { RequireAuth } from "@/components/require-auth";
 import { PageHeader } from "@/components/page-header";
 import { getEstimate, sendFeedback, downloadEstimateExport } from "@/lib/api-client";
 import { btnSecondary, btnPrimary, card, cardPadded, badge, input, label } from "@/lib/ui-classes";
+import { ProvenanceBadge, ProvenanceLegend } from "@/components/provenance-badge";
 
 function EstimateDetail() {
   const { id } = useParams<{ id: string }>();
@@ -71,21 +72,21 @@ function EstimateDetail() {
       <div className="grid gap-4 sm:grid-cols-3">
         <div className={cardPadded}>
           <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Duración (semanas)</p>
-          <p className="mt-1 text-lg font-semibold text-slate-900">
+          <p className="mt-1 font-display text-lg font-semibold tabular-nums text-slate-900">
             {est.duration_weeks_optimistic}–{est.duration_weeks_pessimistic}{" "}
             <span className="text-brand-600">({est.duration_weeks_probable} probable)</span>
           </p>
         </div>
         <div className={cardPadded}>
           <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Costo ({est.currency})</p>
-          <p className="mt-1 text-lg font-semibold text-slate-900">
+          <p className="mt-1 font-display text-lg font-semibold tabular-nums text-slate-900">
             {Number(est.cost_optimistic).toLocaleString()}–{Number(est.cost_pessimistic).toLocaleString()}{" "}
             <span className="text-brand-600">({Number(est.cost_probable).toLocaleString()} probable)</span>
           </p>
         </div>
         <div className={cardPadded}>
           <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Confianza</p>
-          <p className="mt-1 text-lg font-semibold text-slate-900">
+          <p className="mt-1 font-display text-lg font-semibold tabular-nums text-slate-900">
             {Math.round(Number(est.confidence_score) * 100)}%{" "}
             <span className="text-sm font-normal text-slate-500">{est.similarity_threshold_met ? "· umbral cumplido" : "· bajo umbral"}</span>
           </p>
@@ -110,7 +111,10 @@ function EstimateDetail() {
       </div>
 
       <div className={cardPadded}>
-        <h2 className="mb-3 font-semibold text-slate-900">Esfuerzo por fase y rol</h2>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-semibold text-slate-900">Esfuerzo por fase y rol</h2>
+          <ProvenanceLegend />
+        </div>
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
@@ -125,9 +129,9 @@ function EstimateDetail() {
               <tr key={i} className="border-b border-slate-100 last:border-0">
                 <td className="py-2 text-slate-700">{li.phaseName}</td>
                 <td className="text-slate-700">{li.roleName}</td>
-                <td className="font-medium text-slate-900">{li.hours}</td>
+                <td className="font-display font-medium tabular-nums text-slate-900">{li.hours}</td>
                 <td>
-                  <span className={badge}>{li.provenance}</span>
+                  <ProvenanceBadge value={li.provenance} />
                 </td>
               </tr>
             ))}
