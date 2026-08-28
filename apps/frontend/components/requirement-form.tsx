@@ -10,7 +10,7 @@ const COMPLEXITY_OPTIONS = ["low", "medium", "high", "very_high"] as const;
 const COMPLEXITY_LABELS: Record<string, string> = { low: "Baja", medium: "Media", high: "Alta", very_high: "Muy alta" };
 
 // Formatos que attachment-extraction.ts sabe leer — ver mensaje de "unsupported" en el backend.
-const ACCEPTED_EXTENSIONS = ".pdf,.docx,.xlsx,.xls,.txt,.md,.csv";
+const ACCEPTED_EXTENSIONS = ".pdf,.docx,.pptx,.xlsx,.xls,.txt,.md,.csv";
 
 function toCsv(list: string[] | undefined): string {
   return (list ?? []).join(", ");
@@ -199,7 +199,7 @@ export function RequirementForm({
         <label className={labelClass}>Archivos con más detalle del requerimiento</label>
         <p className="mb-2 text-xs text-slate-500">
           Se leen automáticamente y su contenido se incluye al iniciar la estimación de este requerimiento. Formatos soportados: PDF, Word
-          (.docx), Excel (.xlsx/.xls), texto plano (.txt/.md/.csv).
+          (.docx), PowerPoint (.pptx), Excel (.xlsx/.xls), texto plano (.txt/.md/.csv).
         </p>
 
         {existingAttachments.length > 0 && (
