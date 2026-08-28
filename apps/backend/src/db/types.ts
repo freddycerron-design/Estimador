@@ -113,6 +113,21 @@ export interface RequirementRow {
   updated_at: string;
 }
 
+export interface RequirementAttachmentRow {
+  id: string;
+  requirement_id: string;
+  filename: string;
+  mime_type: string;
+  size_bytes: number;
+  storage_url: string | null;
+  storage_key: string;
+  extracted_text: string | null;
+  extraction_status: "ok" | "unsupported" | "error";
+  extraction_note: string | null;
+  uploaded_by: string | null;
+  created_at: string;
+}
+
 export interface MessageRow {
   id: string;
   conversation_id: string;

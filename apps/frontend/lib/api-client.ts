@@ -326,6 +326,50 @@ export function deleteRequirement(id: string) {
   return apiFetch<{ deleted: boolean }>(`/requirements/${id}`, { method: "DELETE" });
 }
 
+// Adjuntos con detalle del requerimiento (spec pedido por usuario: se leen durante la estimación).
+export interface RequirementAttachmentDTO {
+  id: string;
+  requirement_id: string;
+  filename: string;
+  mime_type: string;
+  size_bytes: number;
+  storage_url: string | null;
+  extracted_text: string | null;
+  extraction_status: "ok" | "unsupported" | "error";
+  extraction_note: string | null;
+  created_at: string;
+}
+
+export function listRequirementAttachments(requirementId: string) {
+  return apiFetch<RequirementAttachmentDTO[]>(`/requirements/${requirementId}/attachments`);
+}
+
+export async function uploadRequirementAttachment(requirementId: string, file: File): Promise<RequirementAttachmentDTO> {
+  const accessToken = await getValidAccessToken();
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${API_BASE_URL}/requirements/${requirementId}/attachments`, {
+    method: "POST",
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+    body: formData,
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((body as { error?: string }).error ?? `Error ${res.status}`);
+  return body as RequirementAttachmentDTO;
+}
+
+export async function deleteRequirementAttachment(requirementId: string, attachmentId: string): Promise<void> {
+  const accessToken = await getValidAccessToken();
+  const res = await fetch(`${API_BASE_URL}/requirements/${requirementId}/attachments/${attachmentId}`, {
+    method: "DELETE",
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { error?: string }).error ?? `Error ${res.status}`);
+  }
+}
+
 export async function importRequirementsFile(file: File): Promise<ImportResultDTO> {
   const accessToken = await getValidAccessToken();
   const formData = new FormData();
@@ -354,8 +398,13 @@ export async function downloadRequirementsImportTemplate(): Promise<void> {
   URL.revokeObjectURL(url);
 }
 
-/** Texto natural que se envía como primer mensaje del chat al estimar a partir de un requerimiento cargado. */
-export function formatRequirementAsMessage(r: RequirementDTO): string {
+/**
+ * Texto natural que se envía como primer mensaje del chat al estimar a partir de un requerimiento
+ * cargado. Si se pasan adjuntos ya leídos (`listRequirementAttachments`), su texto extraído se
+ * agrega al final — spec pedido por usuario: los archivos con mayor detalle del requerimiento
+ * deben leerse durante la estimación, no solo quedar archivados.
+ */
+export function formatRequirementAsMessage(r: RequirementDTO, attachments: RequirementAttachmentDTO[] = []): string {
   const parts = [r.description];
   const details: string[] = [];
   if (r.project_type) details.push(`Tipo de proyecto: ${r.project_type}`);
@@ -367,6 +416,14 @@ export function formatRequirementAsMessage(r: RequirementDTO): string {
   if (r.num_interfaces !== null && r.num_interfaces !== undefined) details.push(`Interfaces: ${r.num_interfaces}`);
   if (r.complexity) details.push(`Complejidad: ${r.complexity}`);
   if (details.length) parts.push(details.join(". "));
+
+  const readable = attachments.filter((a) => a.extraction_status === "ok" && a.extracted_text);
+  if (readable.length > 0) {
+    parts.push(
+      `Documentos adjuntos con mayor detalle del requerimiento (${readable.length}):\n\n` +
+        readable.map((a) => `--- Documento: "${a.filename}" ---\n${a.extracted_text}\n--- Fin de "${a.filename}" ---`).join("\n\n")
+    );
+  }
   return parts.join("\n\n");
 }
 

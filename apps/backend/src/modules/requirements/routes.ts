@@ -1,8 +1,10 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { db, unwrap, unwrapNullable } from "../../db/insforge-client.js";
-import type { RequirementRow } from "../../db/types.js";
+import type { RequirementRow, RequirementAttachmentRow } from "../../db/types.js";
 import { parseRequirementsSpreadsheet, importRequirementRows, buildRequirementsImportTemplateBuffer } from "./import.js";
+import { extractAttachmentText } from "./attachment-extraction.js";
+import { uploadRequirementAttachment, deleteRequirementAttachmentFile } from "../../db/storage.js";
 
 const RequirementBody = z.object({
   title: z.string().min(1),
@@ -158,5 +160,77 @@ export default async function requirementsRoutes(app: FastifyInstance) {
       return { error: "El archivo no tiene filas de datos" };
     }
     return importRequirementRows(rows, req.userId);
+  });
+
+  // --- Adjuntos con detalle del requerimiento (spec pedido por usuario: se leen durante la
+  // estimación, no solo se archivan) ---
+
+  app.get("/requirements/:id/attachments", async (req) => {
+    const { id } = req.params as { id: string };
+    return unwrap<RequirementAttachmentRow[]>(
+      "select:requirement_attachments",
+      db.from("requirement_attachments").select().eq("requirement_id", id).order("created_at", { ascending: true })
+    );
+  });
+
+  app.post("/requirements/:id/attachments", async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const requirement = await unwrapNullable<RequirementRow | null>("select:requirements:check_attach", db.from("requirements").select().eq("id", id).maybeSingle());
+    if (!requirement) {
+      reply.code(404);
+      return { error: "Requerimiento no encontrado" };
+    }
+
+    const file = await req.file();
+    if (!file) {
+      reply.code(400);
+      return { error: "No se recibió ningún archivo (campo 'file' esperado, multipart/form-data)" };
+    }
+    const buffer = await file.toBuffer();
+    if (buffer.length === 0) {
+      reply.code(400);
+      return { error: "El archivo está vacío" };
+    }
+
+    const extraction = await extractAttachmentText(buffer, file.filename, file.mimetype);
+    const { url: storageUrl, key: storageKey } = await uploadRequirementAttachment(buffer, file.filename, file.mimetype, id);
+
+    const [created] = await unwrap<RequirementAttachmentRow[]>(
+      "insert:requirement_attachments",
+      db
+        .from("requirement_attachments")
+        .insert([
+          {
+            requirement_id: id,
+            filename: file.filename,
+            mime_type: file.mimetype,
+            size_bytes: buffer.length,
+            storage_url: storageUrl,
+            storage_key: storageKey,
+            extracted_text: extraction.text,
+            extraction_status: extraction.status,
+            extraction_note: extraction.note,
+            uploaded_by: req.userId,
+          },
+        ])
+        .select()
+    );
+    reply.code(201);
+    return created;
+  });
+
+  app.delete("/requirements/:id/attachments/:attachmentId", async (req, reply) => {
+    const { attachmentId } = req.params as { id: string; attachmentId: string };
+    const attachment = await unwrapNullable<RequirementAttachmentRow | null>(
+      "select:requirement_attachments:one",
+      db.from("requirement_attachments").select().eq("id", attachmentId).maybeSingle()
+    );
+    if (!attachment) {
+      reply.code(404);
+      return { error: "Adjunto no encontrado" };
+    }
+    await unwrapNullable("delete:requirement_attachments", db.from("requirement_attachments").delete().eq("id", attachmentId));
+    await deleteRequirementAttachmentFile(attachment.storage_key);
+    return { deleted: true };
   });
 }

@@ -20,6 +20,7 @@ import {
   getProject,
   listRoles,
   listCostRates,
+  listRequirementAttachments,
   type RoleDTO,
 } from "@/lib/api-client";
 import {
@@ -189,8 +190,8 @@ function ChatUI() {
         setParamsConfirmed(true);
         router.replace(`/estimate/new?c=${conv.id}`);
 
-        const requirement = await getRequirement(urlRequirementId);
-        const text = formatRequirementAsMessage(requirement);
+        const [requirement, attachments] = await Promise.all([getRequirement(urlRequirementId), listRequirementAttachments(urlRequirementId)]);
+        const text = formatRequirementAsMessage(requirement, attachments);
         setMessages([{ role: "user", text }]);
         setSending(true);
         const result = await sendMessage(conv.id, text);

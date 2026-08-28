@@ -1,11 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import type { RequirementFormInput, RequirementDTO } from "@/lib/api-client";
+import { useEffect, useState } from "react";
+import { Paperclip, X, FileText, AlertTriangle } from "lucide-react";
+import type { RequirementFormInput, RequirementDTO, RequirementAttachmentDTO } from "@/lib/api-client";
+import { listRequirementAttachments, uploadRequirementAttachment, deleteRequirementAttachment } from "@/lib/api-client";
 import { btnPrimary, btnSecondary, input as inputClass, label as labelClass } from "@/lib/ui-classes";
 
 const COMPLEXITY_OPTIONS = ["low", "medium", "high", "very_high"] as const;
 const COMPLEXITY_LABELS: Record<string, string> = { low: "Baja", medium: "Media", high: "Alta", very_high: "Muy alta" };
+
+// Formatos que attachment-extraction.ts sabe leer — ver mensaje de "unsupported" en el backend.
+const ACCEPTED_EXTENSIONS = ".pdf,.docx,.xlsx,.xls,.txt,.md,.csv";
 
 function toCsv(list: string[] | undefined): string {
   return (list ?? []).join(", ");
@@ -17,14 +22,35 @@ function fromCsv(value: string): string[] {
     .filter(Boolean);
 }
 
+function formatSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+const STATUS_LABELS: Record<RequirementAttachmentDTO["extraction_status"], string> = {
+  ok: "Leído",
+  unsupported: "Formato no soportado",
+  error: "No se pudo leer",
+};
+const STATUS_STYLES: Record<RequirementAttachmentDTO["extraction_status"], string> = {
+  ok: "bg-emerald-100 text-emerald-700",
+  unsupported: "bg-slate-100 text-slate-500",
+  error: "bg-red-100 text-red-700",
+};
+
 export function RequirementForm({
   initial,
   onSubmit,
+  onSaved,
   onCancel,
   submitLabel,
 }: {
   initial?: RequirementDTO;
-  onSubmit: (input: RequirementFormInput) => Promise<void>;
+  /** Guarda solo los campos del requerimiento (crear o actualizar) — sin efectos secundarios de UI, para poder subir los adjuntos antes de que el padre cierre el formulario. */
+  onSubmit: (input: RequirementFormInput) => Promise<RequirementDTO>;
+  /** Se llama cuando el requerimiento y todos sus adjuntos ya se guardaron — acá el padre cierra el formulario/recarga la lista. */
+  onSaved: () => void;
   onCancel: () => void;
   submitLabel: string;
 }) {
@@ -41,12 +67,45 @@ export function RequirementForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Adjuntos con mayor detalle del requerimiento (spec pedido por usuario) — se leen en el
+  // backend al subirlos y ese texto se incluye luego en el mensaje inicial de la estimación.
+  const [existingAttachments, setExistingAttachments] = useState<RequirementAttachmentDTO[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initial) listRequirementAttachments(initial.id).then(setExistingAttachments);
+  }, [initial?.id]);
+
+  function addFiles(files: FileList | null) {
+    if (!files) return;
+    setPendingFiles((prev) => [...prev, ...Array.from(files)]);
+  }
+
+  function removePendingFile(index: number) {
+    setPendingFiles((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function removeExistingAttachment(attachmentId: string) {
+    if (!initial) return;
+    setDeletingId(attachmentId);
+    try {
+      await deleteRequirementAttachment(initial.id, attachmentId);
+      setExistingAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo eliminar el adjunto");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
     try {
-      await onSubmit({
+      const saved = await onSubmit({
         title,
         description,
         projectType: projectType || null,
@@ -58,6 +117,23 @@ export function RequirementForm({
         numInterfaces: numInterfaces ? Number(numInterfaces) : null,
         complexity: (complexity || null) as RequirementFormInput["complexity"],
       });
+
+      const uploadErrors: string[] = [];
+      for (let i = 0; i < pendingFiles.length; i++) {
+        setUploadingIndex(i);
+        try {
+          await uploadRequirementAttachment(saved.id, pendingFiles[i]!);
+        } catch (err) {
+          uploadErrors.push(`${pendingFiles[i]!.name}: ${err instanceof Error ? err.message : "error al subir"}`);
+        }
+      }
+      setUploadingIndex(null);
+      setPendingFiles([]);
+
+      if (uploadErrors.length > 0) {
+        setError(`El requerimiento se guardó, pero algunos adjuntos no se pudieron subir — ${uploadErrors.join("; ")}`);
+      }
+      onSaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo guardar");
     } finally {
@@ -117,6 +193,69 @@ export function RequirementForm({
             ))}
           </select>
         </div>
+      </div>
+
+      <div className="border-t border-accent-200 pt-3">
+        <label className={labelClass}>Archivos con más detalle del requerimiento</label>
+        <p className="mb-2 text-xs text-slate-500">
+          Se leen automáticamente y su contenido se incluye al iniciar la estimación de este requerimiento. Formatos soportados: PDF, Word
+          (.docx), Excel (.xlsx/.xls), texto plano (.txt/.md/.csv).
+        </p>
+
+        {existingAttachments.length > 0 && (
+          <ul className="mb-2 space-y-1.5">
+            {existingAttachments.map((a) => (
+              <li key={a.id} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm">
+                <FileText className="h-4 w-4 shrink-0 text-slate-400" strokeWidth={2} />
+                <span className="flex-1 truncate text-slate-700">{a.filename}</span>
+                <span className="shrink-0 text-xs text-slate-400">{formatSize(a.size_bytes)}</span>
+                <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[a.extraction_status]}`} title={a.extraction_note ?? undefined}>
+                  {STATUS_LABELS[a.extraction_status]}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removeExistingAttachment(a.id)}
+                  disabled={deletingId === a.id}
+                  className="shrink-0 text-slate-400 hover:text-red-600 disabled:opacity-50"
+                  title="Eliminar adjunto"
+                >
+                  <X className="h-4 w-4" strokeWidth={2} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {pendingFiles.length > 0 && (
+          <ul className="mb-2 space-y-1.5">
+            {pendingFiles.map((f, i) => (
+              <li key={i} className="flex items-center gap-2 rounded-lg border border-dashed border-accent-300 bg-white px-3 py-1.5 text-sm">
+                <Paperclip className="h-4 w-4 shrink-0 text-accent-500" strokeWidth={2} />
+                <span className="flex-1 truncate text-slate-700">{f.name}</span>
+                <span className="shrink-0 text-xs text-slate-400">{formatSize(f.size)}</span>
+                {uploadingIndex === i ? (
+                  <span className="shrink-0 text-xs text-accent-600">Subiendo…</span>
+                ) : (
+                  <button type="button" onClick={() => removePendingFile(i)} className="shrink-0 text-slate-400 hover:text-red-600" title="Quitar">
+                    <X className="h-4 w-4" strokeWidth={2} />
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <label className={`${btnSecondary} inline-flex cursor-pointer`}>
+          <Paperclip className="h-3.5 w-3.5" strokeWidth={2} />
+          Adjuntar archivo(s)
+          <input type="file" multiple accept={ACCEPTED_EXTENSIONS} onChange={(e) => addFiles(e.target.files)} className="hidden" />
+        </label>
+        {!initial && pendingFiles.length > 0 && (
+          <p className="mt-1.5 flex items-center gap-1 text-xs text-slate-400">
+            <AlertTriangle className="h-3 w-3" strokeWidth={2} />
+            Se subirán al guardar el requerimiento.
+          </p>
+        )}
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}

@@ -179,8 +179,8 @@ function RequirementsList() {
           <RequirementForm
             submitLabel="Crear requerimiento"
             onCancel={() => setCreating(false)}
-            onSubmit={async (input) => {
-              await createRequirement(input);
+            onSubmit={(input) => createRequirement(input)}
+            onSaved={() => {
               setCreating(false);
               reload(query || undefined);
             }}
@@ -198,8 +198,8 @@ function RequirementsList() {
                 initial={editingData}
                 submitLabel="Guardar cambios"
                 onCancel={() => setEditingId(null)}
-                onSubmit={async (input) => {
-                  await updateRequirement(r.id, input);
+                onSubmit={(input) => updateRequirement(r.id, input)}
+                onSaved={() => {
                   setEditingId(null);
                   reload(query || undefined);
                 }}
