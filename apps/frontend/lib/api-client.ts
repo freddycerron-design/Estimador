@@ -407,6 +407,8 @@ export interface CostRateDTO {
   role_id: string;
   currency: string;
   rate_per_hour: string;
+  // % de dedicación del rol al proyecto (0-1) — no siempre es 100%, afecta horas/costo/duración.
+  allocation_pct: string;
   is_active: boolean;
 }
 
@@ -414,8 +416,8 @@ export function listCostRates() {
   return apiFetch<CostRateDTO[]>(`/admin/config/cost-rates`);
 }
 
-export function updateCostRate(roleId: string, ratePerHour: number, currency = "USD") {
-  return apiFetch<CostRateDTO>(`/admin/config/cost-rates`, { method: "PUT", body: JSON.stringify({ roleId, ratePerHour, currency }) });
+export function updateCostRate(roleId: string, ratePerHour: number, allocationPct: number, currency = "USD") {
+  return apiFetch<CostRateDTO>(`/admin/config/cost-rates`, { method: "PUT", body: JSON.stringify({ roleId, ratePerHour, allocationPct, currency }) });
 }
 
 export interface RoleDTO {

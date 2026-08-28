@@ -10,7 +10,13 @@ import { requireAdmin } from "../../plugins/require-admin.js";
 
 const SettingBody = z.object({ key: z.string(), value: z.unknown() });
 const WeightsBody = z.object({ weights: SimilarityWeightsSchema, name: z.string().default("custom") });
-const CostRateBody = z.object({ roleId: z.string().uuid(), ratePerHour: z.number().positive(), currency: z.string().default("USD") });
+const CostRateBody = z.object({
+  roleId: z.string().uuid(),
+  ratePerHour: z.number().positive(),
+  currency: z.string().default("USD"),
+  // % de dedicación del rol al proyecto — no siempre es 100% (spec pedido por usuario).
+  allocationPct: z.number().min(0.01).max(1).default(1),
+});
 
 export default async function adminConfigRoutes(app: FastifyInstance) {
   app.get("/admin/config/system-settings", async () => unwrap<SystemSettingRow[]>("select:system_settings", db.from("system_settings").select()));
@@ -82,7 +88,17 @@ export default async function adminConfigRoutes(app: FastifyInstance) {
       "insert:cost_rates",
       db
         .from("cost_rates")
-        .insert([{ role_id: body.roleId, currency: body.currency, rate_per_hour: body.ratePerHour, effective_from: new Date().toISOString().slice(0, 10), version: 1, is_active: true }])
+        .insert([
+          {
+            role_id: body.roleId,
+            currency: body.currency,
+            rate_per_hour: body.ratePerHour,
+            allocation_pct: body.allocationPct,
+            effective_from: new Date().toISOString().slice(0, 10),
+            version: 1,
+            is_active: true,
+          },
+        ])
         .select()
     );
     invalidateCostRatesCache();

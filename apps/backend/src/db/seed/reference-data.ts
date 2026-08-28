@@ -48,6 +48,30 @@ export const COST_RATES: Record<string, number> = {
   Especialista: 50,
 };
 
+/**
+ * % de asignación/dedicación por defecto de cada rol (spec pedido por usuario: no siempre es
+ * 100%) — configurable y versionado junto a la tarifa en `cost_rates.allocation_pct`. Se usa para
+ * (a) estimar horas de roles incluidos que no tienen NINGÚN dato histórico, a partir de la
+ * duración probable del proyecto, y (b) detectar si un rol de baja dedicación se vuelve el
+ * cuello de botella de la duración total. Roles de entrega central (Desarrollador, QA) parten de
+ * 100%; roles de soporte/especialistas parten más bajo — son valores iniciales editables en Admin.
+ */
+export const ROLE_ALLOCATION_PCT: Record<string, number> = {
+  "Project Manager": 0.7,
+  "Analista funcional": 0.8,
+  "Arquitecto de solución": 0.5,
+  "Líder técnico": 0.8,
+  Desarrollador: 1,
+  "Analista de Calidad (QA)": 0.9,
+  Integrador: 0.6,
+  "Analista de Seguridad": 0.3,
+  "UX/UI": 0.6,
+  DBA: 0.25,
+  "Analista de procesos": 0.4,
+  "Gestor del cambio": 0.3,
+  Especialista: 0.2,
+};
+
 /** Pesos de similitud por defecto (spec §6) — deben sumar 1.0. */
 export const DEFAULT_SIMILARITY_WEIGHTS = {
   functionality: 0.25,
@@ -69,6 +93,9 @@ export const DEFAULT_SYSTEM_SETTINGS: Record<string, unknown> = {
   MIN_SAMPLE_SIZE_FOR_PATTERN: 3,
   PATTERN_VARIANCE_THRESHOLD_PCT: 12,
   PROPOSAL_IMPROVEMENT_THRESHOLD_PCT: 5,
+  // Horas/semana estándar para convertir semanas de duración <-> horas de esfuerzo cuando un rol
+  // no tiene datos históricos propios (spec pedido por usuario: % de asignación por rol).
+  STANDARD_WEEKLY_HOURS: 40,
 };
 
 export const SKILLS_CATALOG: { key: string; displayName: string; description: string }[] = [

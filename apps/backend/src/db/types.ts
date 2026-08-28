@@ -32,6 +32,8 @@ export interface CostRateRow {
   role_id: string;
   currency: string;
   rate_per_hour: string; // numeric vuelve como string desde PostgREST
+  /** % de dedicación de este rol al proyecto (0-1) — no siempre es 100% (spec pedido por usuario). */
+  allocation_pct: string; // numeric vuelve como string desde PostgREST
   effective_from: string;
   effective_to: string | null;
   version: number;

@@ -80,6 +80,88 @@ export function weightedDurationWeeks(references: ReferenceActuals[]): number {
   return references.reduce((sum, ref) => sum + ref.durationWeeks * ref.weight, 0);
 }
 
+/** % de dedicación asumido cuando un rol no tiene tarifa/asignación configurada (no debería pasar en uso normal). */
+export const DEFAULT_ALLOCATION_PCT = 1;
+
+/**
+ * Roles que el usuario incluyó explícitamente pero que NO tienen NINGUNA hora histórica ponderada
+ * (rol nuevo en el catálogo, o ninguna referencia usable lo empleó) no pueden estimarse por
+ * promedio histórico — spec pedido por usuario: el % de asignación de cada rol (no siempre 100%)
+ * debe considerarse en el cálculo. Se estima "top-down": horas = semanas probables del proyecto ×
+ * horas/semana estándar × % de asignación configurado del rol, marcado explícitamente como
+ * ASSUMPTION (nunca se presenta como si viniera de datos reales).
+ */
+export function fillMissingRolesFromAllocation(
+  lineItems: EstimateLineItem[],
+  includedRoleIds: string[] | null | undefined,
+  probableWeeks: number,
+  standardWeeklyHours: number,
+  allocationPctByRole: Map<string, number>,
+  fallbackPhaseId: string | undefined,
+  fallbackPhaseName: string,
+  roleName: (id: string) => string
+): { lineItems: EstimateLineItem[]; addedRoleNames: string[] } {
+  if (!includedRoleIds || includedRoleIds.length === 0 || !fallbackPhaseId) {
+    return { lineItems, addedRoleNames: [] };
+  }
+  const rolesWithHours = new Set(lineItems.map((li) => li.roleId));
+  const missing = includedRoleIds.filter((id) => !rolesWithHours.has(id));
+  if (missing.length === 0) return { lineItems, addedRoleNames: [] };
+
+  const weeksBasis = probableWeeks > 0 ? probableWeeks : 1;
+  const added: EstimateLineItem[] = missing.map((roleId) => {
+    const pct = allocationPctByRole.get(roleId) ?? DEFAULT_ALLOCATION_PCT;
+    const hours = Math.max(1, Math.round(weeksBasis * standardWeeklyHours * pct));
+    return {
+      phaseId: fallbackPhaseId,
+      phaseName: fallbackPhaseName,
+      roleId,
+      roleName: roleName(roleId),
+      hours,
+      provenance: "ASSUMPTION" as const,
+      sourceNote: `Sin datos históricos para este rol en las referencias usadas — estimado a partir de la duración probable del proyecto (${weeksBasis.toFixed(1)} semanas) y su % de asignación configurado (${Math.round(pct * 100)}%).`,
+    };
+  });
+
+  return { lineItems: [...lineItems, ...added].sort((a, b) => b.hours - a.hours), addedRoleNames: added.map((a) => a.roleName) };
+}
+
+/**
+ * Si algún rol necesita más semanas de calendario que las estimadas para completar sus horas a su
+ * % de asignación configurado (p. ej. un rol al 25% con 200 horas necesita 12.5 semanas, no las 8
+ * "probables" del historial), la duración probable se extiende hasta ese mínimo — un rol de baja
+ * dedicación no puede completar su trabajo más rápido que su disponibilidad real.
+ */
+export function applyAllocationDurationBottleneck(
+  probableWeeks: number,
+  lineItems: EstimateLineItem[],
+  standardWeeklyHours: number,
+  allocationPctByRole: Map<string, number>,
+  roleName: (id: string) => string
+): { weeks: number; note: string | null } {
+  const hoursByRole = new Map<string, number>();
+  for (const li of lineItems) hoursByRole.set(li.roleId, (hoursByRole.get(li.roleId) ?? 0) + li.hours);
+
+  let bottleneckWeeks = probableWeeks;
+  let bottleneckRoleId: string | null = null;
+  for (const [roleId, hours] of hoursByRole) {
+    const pct = allocationPctByRole.get(roleId) ?? DEFAULT_ALLOCATION_PCT;
+    if (pct <= 0) continue;
+    const weeksNeeded = hours / (standardWeeklyHours * pct);
+    if (weeksNeeded > bottleneckWeeks) {
+      bottleneckWeeks = weeksNeeded;
+      bottleneckRoleId = roleId;
+    }
+  }
+
+  if (!bottleneckRoleId) return { weeks: probableWeeks, note: null };
+  const pct = allocationPctByRole.get(bottleneckRoleId) ?? DEFAULT_ALLOCATION_PCT;
+  return {
+    weeks: bottleneckWeeks,
+    note: `La duración probable se ajustó de ${probableWeeks.toFixed(1)} a ${bottleneckWeeks.toFixed(1)} semanas: el rol "${roleName(bottleneckRoleId)}" está asignado solo al ${Math.round(pct * 100)}% y no puede completar sus horas estimadas dentro del plazo histórico original.`,
+  };
+}
+
 export function computeConfidenceFactors(
   similarityAvg: number,
   sampleSize: number,

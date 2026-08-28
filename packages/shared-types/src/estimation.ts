@@ -37,6 +37,8 @@ export interface CostLine {
   roleName: string;
   hours: number;
   ratePerHour: number;
+  /** % de dedicación configurado para este rol (0-1) — no siempre es 100%, ver `allocation_pct` en `cost_rates`. */
+  allocationPct: number;
   cost: number;
 }
 

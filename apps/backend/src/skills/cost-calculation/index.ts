@@ -48,9 +48,10 @@ export const costCalculationSkill = defineSkill<
     let laborCost = 0;
     for (const [roleId, { name, hours }] of hoursByRole) {
       const rate = Number(rates.get(roleId)?.rate_per_hour ?? 40);
+      const allocationPct = Number(rates.get(roleId)?.allocation_pct ?? 1);
       const cost = hours * rate;
       laborCost += cost;
-      byRole.push({ roleId, roleName: name, hours, ratePerHour: rate, cost: Math.round(cost) });
+      byRole.push({ roleId, roleName: name, hours, ratePerHour: rate, allocationPct, cost: Math.round(cost) });
     }
     byRole.sort((a, b) => b.cost - a.cost);
 

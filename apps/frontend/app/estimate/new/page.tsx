@@ -19,6 +19,7 @@ import {
   getEstimate,
   getProject,
   listRoles,
+  listCostRates,
   type RoleDTO,
 } from "@/lib/api-client";
 import {
@@ -68,6 +69,9 @@ function ChatUI() {
   // parámetros) — arrancan TODOS marcados (comportamiento actual, sin filtrar) salvo que se
   // esté refinando una estimación anterior que haya excluido alguno.
   const [roles, setRoles] = useState<RoleDTO[]>([]);
+  // % de asignación configurado por rol (0-1) — solo informativo acá, para que el usuario sepa
+  // que un rol incluido no siempre se estima como dedicación 100% (spec pedido por usuario).
+  const [allocationPctByRole, setAllocationPctByRole] = useState<Record<string, number>>({});
   const [includedRoleIds, setIncludedRoleIds] = useState<Set<string>>(new Set());
   const [confirming, setConfirming] = useState(false);
   // Al refinar, si la estimación anterior tiene el proyecto con su descripción original, se
@@ -106,8 +110,11 @@ function ChatUI() {
     setParamsError(null);
     (async () => {
       try {
-        const allRoles = await listRoles();
-        if (!cancelled) setRoles(allRoles);
+        const [allRoles, costRates] = await Promise.all([listRoles(), listCostRates()]);
+        if (!cancelled) {
+          setRoles(allRoles);
+          setAllocationPctByRole(Object.fromEntries(costRates.map((r) => [r.role_id, Number(r.allocation_pct)])));
+        }
 
         if (refineFromId) {
           const { estimate } = await getEstimate(refineFromId);
@@ -322,7 +329,8 @@ function ChatUI() {
                   <h3 className="mb-1 text-sm font-medium text-slate-700">Roles a incluir en el desglose</h3>
                   <p className="mb-3 text-xs text-slate-400">
                     Desmarca los roles que no quieras que aparezcan en el esfuerzo por fase y rol de esta estimación. Si no desmarcas ninguno, se
-                    incluyen todos (comportamiento estándar).
+                    incluyen todos (comportamiento estándar). El % junto a cada rol es su asignación configurada al proyecto — no siempre es 100%, y
+                    se considera en el cálculo de tiempo y costo.
                   </p>
                   <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     {roles.map((role) => (
@@ -334,6 +342,9 @@ function ChatUI() {
                           className="h-4 w-4 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-400"
                         />
                         {role.name}
+                        <span className="text-xs text-slate-400">
+                          ({Math.round((allocationPctByRole[role.id] ?? 1) * 100)}% asignación)
+                        </span>
                       </label>
                     ))}
                   </div>

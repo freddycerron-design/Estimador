@@ -34,6 +34,7 @@ const SETTING_LABELS: Record<string, string> = {
   MIN_SAMPLE_SIZE_FOR_PATTERN: "Muestra mínima para detectar un patrón (Learning Agent)",
   PATTERN_VARIANCE_THRESHOLD_PCT: "Desviación mínima para considerar un patrón",
   PROPOSAL_IMPROVEMENT_THRESHOLD_PCT: "Mejora mínima para aprobar una propuesta",
+  STANDARD_WEEKLY_HOURS: "Horas/semana estándar (para roles sin datos históricos y % de asignación)",
 };
 
 // Claves que se almacenan como fracción 0-1 pero se muestran/editan como % (0.25 -> "25").
@@ -175,14 +176,16 @@ function WeightsSection() {
 function RatesSection() {
   const [rates, setRates] = useState<CostRateDTO[]>([]);
   const [roles, setRoles] = useState<RoleDTO[]>([]);
-  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [rateDrafts, setRateDrafts] = useState<Record<string, string>>({});
+  const [allocationDrafts, setAllocationDrafts] = useState<Record<string, string>>({});
   const [savingRole, setSavingRole] = useState<string | null>(null);
 
   function reload() {
     Promise.all([listCostRates(), listRoles()]).then(([r, ro]) => {
       setRates(r);
       setRoles(ro);
-      setDrafts(Object.fromEntries(r.map((x) => [x.role_id, x.rate_per_hour])));
+      setRateDrafts(Object.fromEntries(r.map((x) => [x.role_id, x.rate_per_hour])));
+      setAllocationDrafts(Object.fromEntries(r.map((x) => [x.role_id, String(Math.round(Number(x.allocation_pct) * 100))])));
     });
   }
   useEffect(reload, []);
@@ -190,7 +193,8 @@ function RatesSection() {
   async function handleSave(roleId: string) {
     setSavingRole(roleId);
     try {
-      await updateCostRate(roleId, Number(drafts[roleId]));
+      const allocationPct = Math.min(1, Math.max(0.01, Number(allocationDrafts[roleId]) / 100));
+      await updateCostRate(roleId, Number(rateDrafts[roleId]), allocationPct);
       reload();
     } finally {
       setSavingRole(null);
@@ -202,17 +206,39 @@ function RatesSection() {
   return (
     <div className={cardPadded}>
       <h2 className="mb-1 font-semibold text-slate-900">Tarifas por rol</h2>
-      <p className="mb-4 text-sm text-slate-500">USD/hora. Cada cambio crea una nueva versión vigente, desactivando la anterior.</p>
+      <p className="mb-4 text-sm text-slate-500">
+        USD/hora y % de asignación al proyecto — un rol no siempre está dedicado al 100%, y esto se considera en el cálculo de tiempo y costo de cada
+        estimación. Cada cambio crea una nueva versión vigente, desactivando la anterior.
+      </p>
       <div className="space-y-2">
         {rates.map((r) => (
           <div key={r.id} className="flex items-center gap-3">
             <label className="w-48 shrink-0 text-sm text-slate-600">{roleName(r.role_id)}</label>
-            <input
-              value={drafts[r.role_id] ?? ""}
-              onChange={(e) => setDrafts((d) => ({ ...d, [r.role_id]: e.target.value }))}
-              className={`${input} max-w-[120px]`}
-              type="number"
-            />
+            <div className="flex items-center gap-1">
+              <input
+                value={rateDrafts[r.role_id] ?? ""}
+                onChange={(e) => setRateDrafts((d) => ({ ...d, [r.role_id]: e.target.value }))}
+                className={`${input} max-w-[100px]`}
+                type="number"
+                title="USD/hora"
+              />
+              <span className="text-xs text-slate-400">USD/h</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="relative">
+                <input
+                  value={allocationDrafts[r.role_id] ?? ""}
+                  onChange={(e) => setAllocationDrafts((d) => ({ ...d, [r.role_id]: e.target.value }))}
+                  className={`${input} max-w-[80px] pr-6`}
+                  type="number"
+                  min={1}
+                  max={100}
+                  title="% de asignación al proyecto"
+                />
+                <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-slate-400">%</span>
+              </div>
+              <span className="text-xs text-slate-400">asignación</span>
+            </div>
             <button onClick={() => handleSave(r.role_id)} disabled={savingRole === r.role_id} className="text-brand-600 hover:text-brand-700 disabled:opacity-50" title="Guardar">
               <Save className="h-4 w-4" strokeWidth={2} />
             </button>

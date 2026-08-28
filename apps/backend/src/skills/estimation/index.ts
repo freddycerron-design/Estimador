@@ -7,6 +7,8 @@ import type { EstimationRuleDiff } from "@estimador/shared-types";
 import { defineSkill } from "../types.js";
 import { loadReferenceLookup } from "../../config/reference-lookup.js";
 import { loadActiveEstimationRules } from "../../config/estimation-rules.js";
+import { loadActiveCostRates } from "../../config/cost-rates.js";
+import { getSetting } from "../../config/system-settings.js";
 import {
   weightedLineItems,
   totalHoursOfReference,
@@ -17,6 +19,8 @@ import {
   confidenceScoreFrom,
   toLineItems,
   filterReferencesByRoles,
+  fillMissingRolesFromAllocation,
+  applyAllocationDurationBottleneck,
   type ReferenceActuals,
 } from "./estimation-engine.js";
 
@@ -46,15 +50,16 @@ export const estimationSkill = defineSkill<
   description:
     "Calcula esfuerzo (horas por fase y rol), duración, rango (optimista/probable/pesimista) y nivel de confianza, ponderando por similitud las referencias históricas usables. Requiere que project-similarity ya haya determinado referencias por encima del umbral.",
   inputSchema: zodToJsonSchema(InputSchema) as any,
-  async execute(input) {
+  async execute(input, ctx) {
     const { usableCandidates, includedRoleIds } = InputSchema.parse(input);
     const missingInformationCount = input.missingInformationCount ?? 0;
 
     const projectIds = usableCandidates.map((c) => c.projectId);
-    const [projects, actuals, lookup] = await Promise.all([
+    const [projects, actuals, lookup, rates] = await Promise.all([
       unwrap<ProjectRow[]>("select:projects:references", db.from("projects").select().in("id", projectIds)),
       unwrap<ProjectActualRow[]>("select:project_actuals:references", db.from("project_actuals").select().in("project_id", projectIds)),
       loadReferenceLookup(),
+      loadActiveCostRates(),
     ]);
 
     const projectById = new Map(projects.map((p) => [p.id, p]));
@@ -82,11 +87,33 @@ export const estimationSkill = defineSkill<
     const filteredReferences = filterReferencesByRoles(references, includedRoleIds);
 
     const byPhaseRole = weightedLineItems(filteredReferences);
-    const lineItems = toLineItems(
+    let lineItems = toLineItems(
       byPhaseRole,
       (id) => lookup.phasesById.get(id)?.name ?? id,
       (id) => lookup.rolesById.get(id)?.name ?? id
     );
+
+    // % de asignación por rol (spec pedido por usuario: no siempre es 100%) — usado para (a)
+    // estimar horas de roles incluidos sin ningún dato histórico y (b) detectar cuellos de
+    // botella de duración por baja dedicación (ver estimation-engine.ts).
+    const allocationPctByRole = new Map<string, number>();
+    for (const [roleId, row] of rates) allocationPctByRole.set(roleId, Number(row.allocation_pct ?? 1));
+    const standardWeeklyHours = getSetting(ctx.settings, "STANDARD_WEEKLY_HOURS", 40);
+    const historicalProbableWeeks = weightedDurationWeeks(references);
+    const projectManagementPhase = [...lookup.phasesById.values()].find((p) => p.name === "Gestión de Proyecto");
+
+    const roleNameOf = (id: string) => lookup.rolesById.get(id)?.name ?? id;
+    const { lineItems: filledLineItems, addedRoleNames } = fillMissingRolesFromAllocation(
+      lineItems,
+      includedRoleIds,
+      historicalProbableWeeks,
+      standardWeeklyHours,
+      allocationPctByRole,
+      projectManagementPhase?.id,
+      projectManagementPhase?.name ?? "Gestión de Proyecto",
+      roleNameOf
+    );
+    lineItems = filledLineItems;
 
     let probableHours = lineItems.reduce((sum, li) => sum + li.hours, 0);
     const totals = filteredReferences.map(totalHoursOfReference);
@@ -113,7 +140,13 @@ export const estimationSkill = defineSkill<
 
     const effortHoursRange = rangeFrom(probableHours, cv);
 
-    const probableWeeks = weightedDurationWeeks(references);
+    const { weeks: probableWeeks, note: bottleneckNote } = applyAllocationDurationBottleneck(
+      historicalProbableWeeks,
+      lineItems,
+      standardWeeklyHours,
+      allocationPctByRole,
+      roleNameOf
+    );
     const durationWeeksRange = rangeFrom(probableWeeks, cv * 0.7); // duración típicamente varía menos que el esfuerzo puro
 
     const similarityAvg = usableCandidates.reduce((sum, c) => sum + c.totalSimilarity, 0) / usableCandidates.length;
@@ -133,6 +166,12 @@ export const estimationSkill = defineSkill<
       const names = includedRoleIds.map((id) => lookup.rolesById.get(id)?.name ?? id).join(", ");
       assumptions.push(`Se limitó el desglose a los roles seleccionados por el usuario para esta estimación: ${names}.`);
     }
+    if (addedRoleNames.length > 0) {
+      assumptions.push(
+        `Los siguientes roles no tenían horas históricas en las referencias usadas y se estimaron a partir de su % de asignación configurado: ${addedRoleNames.join(", ")}.`
+      );
+    }
+    if (bottleneckNote) assumptions.push(bottleneckNote);
 
     return { lineItems, effortHoursRange, durationWeeksRange, confidenceScore, confidenceFactors, assumptions };
   },
