@@ -154,7 +154,7 @@ export async function importRows(rows: ImportRow[]): Promise<ImportSummary> {
       }
 
       // Esfuerzo real: si viene effort_hours_json (nombres de fase/rol) lo usamos tal cual;
-      // si solo viene total_hours, se guarda como un único bucket "Desarrollo/Developer" —
+      // si solo viene total_hours, se guarda como un único bucket "Desarrollo/Desarrollador" —
       // más honesto que inventar una distribución por fase que nadie proporcionó.
       let actualEffortHours: Record<string, Record<string, number>> = {};
       if (row.effort_hours_json) {
@@ -171,7 +171,7 @@ export async function importRows(rows: ImportRow[]): Promise<ImportSummary> {
         }
       } else if (row.total_hours) {
         const devPhase = [...lookup.phasesById.values()].find((p) => p.name === "Desarrollo");
-        const devRole = [...lookup.rolesById.values()].find((r) => r.name === "Developer");
+        const devRole = [...lookup.rolesById.values()].find((r) => r.name === "Desarrollador");
         if (devPhase && devRole) actualEffortHours = { [devPhase.id]: { [devRole.id]: row.total_hours } };
       }
 
@@ -186,7 +186,7 @@ export async function importRows(rows: ImportRow[]): Promise<ImportSummary> {
                 actual_effort_hours: actualEffortHours,
                 actual_duration_weeks: row.duration_weeks ?? null,
                 actual_cost: row.actual_cost ?? null,
-                notes: row.effort_hours_json ? "Importado con desglose fase/rol." : "Importado sin desglose por fase/rol — horas totales bajo Desarrollo/Developer.",
+                notes: row.effort_hours_json ? "Importado con desglose fase/rol." : "Importado sin desglose por fase/rol — horas totales bajo Desarrollo/Desarrollador.",
               },
             ])
             .select()

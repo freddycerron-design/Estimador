@@ -17,27 +17,35 @@ export const PHASES: { name: string; sortOrder: number }[] = [
 
 export const ROLES: { name: string; category: string }[] = [
   { name: "Project Manager", category: "management" },
-  { name: "Business Analyst", category: "analysis" },
-  { name: "Solution Architect", category: "architecture" },
-  { name: "Developer", category: "engineering" },
-  { name: "QA", category: "quality" },
-  { name: "DevOps", category: "operations" },
-  { name: "Security", category: "security" },
+  { name: "Analista funcional", category: "analysis" },
+  { name: "Arquitecto de solución", category: "architecture" },
+  { name: "Líder técnico", category: "engineering" },
+  { name: "Desarrollador", category: "engineering" },
+  { name: "Analista de Calidad (QA)", category: "quality" },
+  { name: "Integrador", category: "operations" },
+  { name: "Analista de Seguridad", category: "security" },
   { name: "UX/UI", category: "design" },
-  { name: "Data Engineer", category: "engineering" },
+  { name: "DBA", category: "engineering" },
+  { name: "Analista de procesos", category: "analysis" },
+  { name: "Gestor del cambio", category: "management" },
+  { name: "Especialista", category: "engineering" },
 ];
 
 /** Tarifas de ejemplo, USD/hora (spec §14) — configurables, no hardcodeadas en lógica de negocio. */
 export const COST_RATES: Record<string, number> = {
   "Project Manager": 55,
-  "Business Analyst": 45,
-  "Solution Architect": 60,
-  Developer: 35,
-  QA: 25,
-  DevOps: 45,
-  Security: 55,
+  "Analista funcional": 45,
+  "Arquitecto de solución": 60,
+  "Líder técnico": 55,
+  Desarrollador: 35,
+  "Analista de Calidad (QA)": 25,
+  Integrador: 45,
+  "Analista de Seguridad": 55,
   "UX/UI": 40,
-  "Data Engineer": 50,
+  DBA: 50,
+  "Analista de procesos": 40,
+  "Gestor del cambio": 45,
+  Especialista: 50,
 };
 
 /** Pesos de similitud por defecto (spec §6) — deben sumar 1.0. */
