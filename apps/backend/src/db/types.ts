@@ -113,6 +113,16 @@ export interface RequirementRow {
   updated_at: string;
 }
 
+export interface AgentPromptVersionRow {
+  id: string;
+  content: string;
+  version: number;
+  is_active: boolean;
+  note: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
 export interface RequirementAttachmentRow {
   id: string;
   requirement_id: string;

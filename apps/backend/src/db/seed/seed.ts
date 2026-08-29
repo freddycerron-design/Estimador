@@ -17,6 +17,7 @@ import {
   type SyntheticProject,
 } from "./synthetic-projects.data.js";
 import type { PhaseRow, RoleRow, ProjectRow } from "../types.js";
+import { DEFAULT_AGENT_SYSTEM_PROMPT } from "../../agent/system-prompt.js";
 
 async function seedSystemSettings() {
   const rows = Object.entries(DEFAULT_SYSTEM_SETTINGS).map(([key, value]) => ({
@@ -90,6 +91,18 @@ async function seedSkills() {
   }));
   await unwrap("insert:skill_versions", db.from("skill_versions").insert(versionRows).select());
   console.log(`✓ skills + skill_versions activas (${insertedSkills.length})`);
+}
+
+/** v1 activa del system prompt del orquestador (spec pedido por usuario: editable) — mismo criterio que skill_versions: el seed siembra la v1 igual al valor hardcodeado en código, no vacía. */
+async function seedAgentPrompt() {
+  await unwrap(
+    "insert:agent_prompt_versions",
+    db
+      .from("agent_prompt_versions")
+      .insert([{ content: DEFAULT_AGENT_SYSTEM_PROMPT, version: 1, is_active: true, note: "Versión inicial — prompt original hardcodeado antes de hacerse editable desde Admin." }])
+      .select()
+  );
+  console.log("✓ agent_prompt_versions v1 activa");
 }
 
 async function seedProject(
@@ -198,6 +211,7 @@ async function main() {
   await seedCostRates(roleIdByName);
   await seedSimilarityWeightProfile();
   await seedSkills();
+  await seedAgentPrompt();
 
   const embedder = createEmbeddingProvider();
   const embed = (text: string) => embedder.embed(text);

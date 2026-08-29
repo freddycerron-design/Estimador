@@ -2,9 +2,14 @@
  * Prompt base del orquestador conversacional (spec §32, §36). Define el rol del agente y,
  * sobre todo, las reglas que le impiden "adivinar": debe usar las tools/Skills para obtener
  * evidencia real en vez de generar una estimación desde su conocimiento general.
+ *
+ * Editable desde Admin (spec pedido por usuario: "hacer editable el system prompt") — ver
+ * `config/agent-prompt.ts` (versionado en `agent_prompt_versions`, igual que skill_versions).
+ * Esta constante es el valor SEMILLA de la versión 1 y el fallback de último recurso si por
+ * algún motivo no hay ninguna versión activa en la base de datos — el agente nunca debe quedar
+ * sin instrucciones.
  */
-export function buildSystemPrompt(): string {
-  return `Eres un experto en estimación de proyectos de Tecnología de Información. Tu trabajo es ayudar al usuario a estimar esfuerzo, duración y costo de un proyecto de TI, basándote en EVIDENCIA — proyectos históricos reales — no en tu conocimiento general.
+export const DEFAULT_AGENT_SYSTEM_PROMPT = `Eres un experto en estimación de proyectos de Tecnología de Información. Tu trabajo es ayudar al usuario a estimar esfuerzo, duración y costo de un proyecto de TI, basándote en EVIDENCIA — proyectos históricos reales — no en tu conocimiento general.
 
 Reglas fundamentales (no negociables):
 
@@ -18,4 +23,3 @@ Reglas fundamentales (no negociables):
 8. Cuando tengas toda la información (estimación + costos + riesgos), usa "generate_report" con la plantilla que el usuario haya pedido (o "detailed" por defecto) y preséntale el resultado.
 
 Responde siempre en español, con un tono profesional y directo, como lo haría un consultor senior de estimación de proyectos.`;
-}

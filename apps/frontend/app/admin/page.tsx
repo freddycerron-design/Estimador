@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Settings, ShieldAlert, Save, History, ChevronDown, ChevronUp } from "lucide-react";
+import { Settings, ShieldAlert, Save, History, ChevronDown, ChevronUp, MessageSquareCode, Copy, RotateCcw } from "lucide-react";
 import { RequireAuth } from "@/components/require-auth";
 import { PageHeader } from "@/components/page-header";
 import { btnPrimary, btnSecondary, cardPadded, badge, badgeBrand, input, label } from "@/lib/ui-classes";
@@ -17,12 +17,16 @@ import {
   listSkills,
   listSkillVersions,
   createSkillVersion,
+  getActiveAgentPrompt,
+  listAgentPromptVersions,
+  createAgentPromptVersion,
   type SystemSettingDTO,
   type SimilarityWeightProfileDTO,
   type CostRateDTO,
   type RoleDTO,
   type SkillDTO,
   type SkillVersionDTO,
+  type AgentPromptVersionDTO,
 } from "@/lib/api-client";
 
 const SETTING_LABELS: Record<string, string> = {
@@ -422,6 +426,124 @@ function SkillsSection() {
   );
 }
 
+function AgentPromptSection() {
+  const [active, setActive] = useState<AgentPromptVersionDTO | null>(null);
+  const [draft, setDraft] = useState("");
+  const [note, setNote] = useState("");
+  const [expanded, setExpanded] = useState(false);
+  const [history, setHistory] = useState<AgentPromptVersionDTO[] | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function reload() {
+    getActiveAgentPrompt().then((v) => {
+      setActive(v);
+      setDraft(v?.content ?? "");
+    });
+  }
+  useEffect(reload, []);
+
+  function toggleExpanded() {
+    const next = !expanded;
+    setExpanded(next);
+    if (next && !history) listAgentPromptVersions().then(setHistory);
+  }
+
+  async function handleSave() {
+    setError(null);
+    if (!draft.trim()) {
+      setError("El prompt no puede estar vacío.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await createAgentPromptVersion(draft, note.trim() || undefined);
+      setNote("");
+      setHistory(null);
+      reload();
+      if (expanded) listAgentPromptVersions().then(setHistory);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo guardar la nueva versión");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const dirty = draft !== (active?.content ?? "");
+
+  return (
+    <div className={cardPadded}>
+      <div className="mb-1 flex items-center gap-2">
+        <MessageSquareCode className="h-4 w-4 text-accent-600" strokeWidth={2} />
+        <h2 className="font-semibold text-slate-900">Prompt del agente</h2>
+        {active && <span className={badgeBrand}>v{active.version} activo</span>}
+      </div>
+      <p className="mb-4 text-sm text-slate-500">
+        Las instrucciones base que el orquestador recibe en cada turno — el flujo obligatorio de tools, cuándo preguntar en vez de adivinar, cómo
+        presentar la trazabilidad. Un cambio acá afecta a TODAS las conversaciones nuevas de inmediato. Guardar crea una versión nueva y la activa,
+        dejando la anterior en el historial por si hay que volver atrás.
+      </p>
+
+      <textarea
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        rows={14}
+        className={`${input} font-mono text-xs leading-relaxed`}
+        spellCheck={false}
+      />
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <input value={note} onChange={(e) => setNote(e.target.value)} className={`${input} max-w-xs`} placeholder="Nota (opcional) — motivo del cambio…" />
+        <button onClick={handleSave} disabled={saving || !dirty} className={btnPrimary}>
+          <Save className="h-3.5 w-3.5" strokeWidth={2} />
+          {saving ? "Guardando…" : "Guardar y activar nueva versión"}
+        </button>
+        {dirty && (
+          <button onClick={() => setDraft(active?.content ?? "")} className={btnSecondary} title="Descartar cambios sin guardar">
+            <RotateCcw className="h-3.5 w-3.5" strokeWidth={2} />
+            Descartar cambios
+          </button>
+        )}
+      </div>
+      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+
+      <button onClick={toggleExpanded} className={`${btnSecondary} mt-4`}>
+        <History className="h-3.5 w-3.5" strokeWidth={2} />
+        {expanded ? "Ocultar historial" : "Ver historial de versiones"}
+        {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+      </button>
+
+      {expanded && (
+        <div className="mt-3 space-y-1.5 border-t border-slate-100 pt-3">
+          {!history ? (
+            <p className="text-sm text-slate-400">Cargando…</p>
+          ) : history.length === 0 ? (
+            <p className="text-sm text-slate-400">Sin versiones registradas.</p>
+          ) : (
+            history.map((v) => (
+              <div key={v.id} className="flex flex-wrap items-center gap-2 rounded-md bg-slate-50 px-3 py-2 text-xs">
+                <span className="font-medium text-slate-700">v{v.version}</span>
+                {v.is_active && <span className={badgeBrand}>activo</span>}
+                <span className="text-slate-400">creada {new Date(v.created_at).toLocaleString()}</span>
+                {v.note && <span className="text-slate-500">— {v.note}</span>}
+                {!v.is_active && (
+                  <button
+                    onClick={() => setDraft(v.content)}
+                    className="ml-auto flex items-center gap-1 text-brand-600 hover:text-brand-700"
+                    title="Copiar este contenido al editor de arriba (para revertir, guárdalo después)"
+                  >
+                    <Copy className="h-3 w-3" strokeWidth={2} />
+                    Copiar al editor
+                  </button>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AdminContent() {
   const [authorized, setAuthorized] = useState<boolean | null>(null);
 
@@ -446,6 +568,7 @@ function AdminContent() {
     <div>
       <PageHeader icon={Settings} title="Administración" subtitle="Parámetros de similitud, tarifas y configuración del sistema." />
       <div className="space-y-6">
+        <AgentPromptSection />
         <SettingsSection />
         <WeightsSection />
         <RatesSection />

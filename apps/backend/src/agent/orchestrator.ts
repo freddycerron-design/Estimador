@@ -4,7 +4,7 @@ import type { LlmMessage, LlmContentBlock } from "../llm/types.js";
 import { createOrchestratorProvider } from "../llm/provider-factory.js";
 import { toolDefinitions, dispatchTool, skillKeyForToolName } from "./tool-registry.js";
 import { buildSkillContext } from "../skills/skill-runtime.js";
-import { buildSystemPrompt } from "./system-prompt.js";
+import { loadActiveAgentPrompt } from "../config/agent-prompt.js";
 import { assembleBundleFromTrace } from "./bundle-assembler.js";
 import { persistEstimate } from "./estimate-persistence.js";
 import { resolveEffectiveParameters } from "../config/estimation-parameters.js";
@@ -44,6 +44,8 @@ export async function runAgentTurn(params: {
   const llm = createOrchestratorProvider();
   const tools = toolDefinitions();
   const maxIterations = params.maxToolIterations ?? DEFAULT_MAX_TOOL_ITERATIONS;
+  // Se carga una sola vez por turno (no cambia entre iteraciones de tool-use del mismo turno).
+  const systemPrompt = await loadActiveAgentPrompt();
 
   const messages: LlmMessage[] = [...params.history];
   const newMessages: LlmMessage[] = [];
@@ -51,7 +53,7 @@ export async function runAgentTurn(params: {
 
   for (let iteration = 0; iteration < maxIterations; iteration++) {
     const response = await llm.complete({
-      system: buildSystemPrompt(),
+      system: systemPrompt,
       messages,
       tools,
       maxTokens: 4096,

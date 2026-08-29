@@ -529,3 +529,26 @@ export function listSkillVersions(skillKey: string) {
 export function createSkillVersion(skillKey: string, config: Record<string, unknown>, note?: string) {
   return apiFetch<SkillVersionDTO>(`/admin/skills/${skillKey}/versions`, { method: "POST", body: JSON.stringify({ config, note }) });
 }
+
+// --- System prompt del agente (spec pedido por usuario: hacerlo editable) ---
+export interface AgentPromptVersionDTO {
+  id: string;
+  content: string;
+  version: number;
+  is_active: boolean;
+  note: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+export function getActiveAgentPrompt() {
+  return apiFetch<AgentPromptVersionDTO | null>(`/admin/agent-prompt`);
+}
+
+export function listAgentPromptVersions() {
+  return apiFetch<AgentPromptVersionDTO[]>(`/admin/agent-prompt/versions`);
+}
+
+export function createAgentPromptVersion(content: string, note?: string) {
+  return apiFetch<AgentPromptVersionDTO>(`/admin/agent-prompt/versions`, { method: "POST", body: JSON.stringify({ content, note }) });
+}
