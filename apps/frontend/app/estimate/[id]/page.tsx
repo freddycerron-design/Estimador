@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { FileText, Download, Presentation, Star } from "lucide-react";
 import { RequireAuth } from "@/components/require-auth";
@@ -8,6 +8,29 @@ import { PageHeader } from "@/components/page-header";
 import { getEstimate, sendFeedback, downloadEstimateExport } from "@/lib/api-client";
 import { btnSecondary, btnPrimary, card, cardPadded, badge, input, label } from "@/lib/ui-classes";
 import { ProvenanceBadge, ProvenanceLegend } from "@/components/provenance-badge";
+
+type LineItem = Awaited<ReturnType<typeof getEstimate>>["lineItems"][number];
+
+/**
+ * Agrupa por fase para la presentación (spec pedido por usuario) — el backend ya entrega
+ * `lineItems` ordenado por fase (según `phases.sort_order`: Análisis, Diseño, Arquitectura,
+ * Desarrollo, Integración, Pruebas, QA, Seguridad, Despliegue, Gestión de Proyecto,
+ * Capacitación, Soporte/Hypercare) y por esfuerzo descendente dentro de cada fase, así que acá
+ * solo hace falta juntar los ítems consecutivos que comparten fase — no volver a ordenar.
+ */
+function groupLineItemsByPhase(lineItems: LineItem[]): { phaseName: string; totalHours: number; items: LineItem[] }[] {
+  const groups: { phaseName: string; totalHours: number; items: LineItem[] }[] = [];
+  for (const li of lineItems) {
+    let group = groups[groups.length - 1];
+    if (!group || group.phaseName !== li.phaseName) {
+      group = { phaseName: li.phaseName, totalHours: 0, items: [] };
+      groups.push(group);
+    }
+    group.items.push(li);
+    group.totalHours += Number(li.hours);
+  }
+  return groups;
+}
 
 function EstimateDetail() {
   const { id } = useParams<{ id: string }>();
@@ -124,22 +147,30 @@ function EstimateDetail() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-left text-xs font-medium uppercase tracking-wide text-slate-400 dark:border-navy-700 dark:text-slate-500">
-              <th className="py-2">Fase</th>
-              <th>Rol</th>
+              <th className="py-2">Rol</th>
               <th>Horas</th>
               <th>Procedencia</th>
             </tr>
           </thead>
           <tbody>
-            {data.lineItems.map((li, i) => (
-              <tr key={i} className="border-b border-slate-100 last:border-0 dark:border-navy-700">
-                <td className="py-2 text-slate-700 dark:text-slate-300">{li.phaseName}</td>
-                <td className="text-slate-700 dark:text-slate-300">{li.roleName}</td>
-                <td className="font-display font-medium tabular-nums text-slate-900 dark:text-slate-100">{li.hours}</td>
-                <td>
-                  <ProvenanceBadge value={li.provenance} />
-                </td>
-              </tr>
+            {groupLineItemsByPhase(data.lineItems).map((group) => (
+              <Fragment key={group.phaseName}>
+                <tr className="border-b border-slate-200 bg-slate-50 dark:border-navy-700 dark:bg-navy-900/40">
+                  <td colSpan={3} className="py-1.5 font-display text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    {group.phaseName}
+                    <span className="ml-2 font-sans font-normal normal-case text-slate-400 dark:text-slate-500">({group.totalHours} h)</span>
+                  </td>
+                </tr>
+                {group.items.map((li, i) => (
+                  <tr key={`${group.phaseName}-${i}`} className="border-b border-slate-100 last:border-0 dark:border-navy-700">
+                    <td className="py-2 pl-3 text-slate-700 dark:text-slate-300">{li.roleName}</td>
+                    <td className="font-display font-medium tabular-nums text-slate-900 dark:text-slate-100">{li.hours}</td>
+                    <td>
+                      <ProvenanceBadge value={li.provenance} />
+                    </td>
+                  </tr>
+                ))}
+              </Fragment>
             ))}
           </tbody>
         </table>

@@ -55,13 +55,22 @@ export default async function estimatesRoutes(app: FastifyInstance) {
         : [];
     const nameById = new Map(referenceProjects.map((p) => [p.id, p.name]));
 
-    return {
-      estimate,
-      lineItems: lineItemRows.map((li) => ({
+    // Orden de presentación pedido por usuario: agrupado por fase, en el orden fijo de
+    // `phases.sort_order` (Análisis, Diseño, Arquitectura, Desarrollo, Integración, Pruebas, QA,
+    // Seguridad, Despliegue, Gestión de Proyecto, Capacitación, Soporte/Hypercare) — dentro de
+    // cada fase, de mayor a menor esfuerzo. Fases desconocidas (no debería pasar) van al final.
+    const sortedLineItems = lineItemRows
+      .map((li) => ({
         ...li,
         phaseName: lookup.phasesById.get(li.phase_id)?.name ?? li.phase_id,
+        phaseSortOrder: lookup.phasesById.get(li.phase_id)?.sort_order ?? 999,
         roleName: lookup.rolesById.get(li.role_id)?.name ?? li.role_id,
-      })),
+      }))
+      .sort((a, b) => a.phaseSortOrder - b.phaseSortOrder || Number(b.hours) - Number(a.hours));
+
+    return {
+      estimate,
+      lineItems: sortedLineItems,
       referenceProjects: referenceRows.map((r) => ({ ...r, projectName: nameById.get(r.reference_project_id) ?? r.reference_project_id })),
     };
   });

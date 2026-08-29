@@ -60,12 +60,18 @@ export async function loadEstimateExportData(estimateId: string): Promise<Estima
       : [];
   const refNameById = new Map(refProjects.map((p) => [p.id, p.name]));
 
-  const lineItems: ExportLineItem[] = lineItemRows.map((li) => ({
-    phaseName: lookup.phasesById.get(li.phase_id)?.name ?? li.phase_id,
-    roleName: lookup.rolesById.get(li.role_id)?.name ?? li.role_id,
-    hours: Number(li.hours),
-    provenance: li.provenance,
-  }));
+  // Mismo orden que en pantalla (spec pedido por usuario): agrupado por fase según
+  // `phases.sort_order`, y dentro de cada fase de mayor a menor esfuerzo.
+  const lineItems: ExportLineItem[] = lineItemRows
+    .map((li) => ({
+      phaseName: lookup.phasesById.get(li.phase_id)?.name ?? li.phase_id,
+      phaseSortOrder: lookup.phasesById.get(li.phase_id)?.sort_order ?? 999,
+      roleName: lookup.rolesById.get(li.role_id)?.name ?? li.role_id,
+      hours: Number(li.hours),
+      provenance: li.provenance,
+    }))
+    .sort((a, b) => a.phaseSortOrder - b.phaseSortOrder || b.hours - a.hours)
+    .map(({ phaseSortOrder: _phaseSortOrder, ...rest }) => rest);
 
   const hoursByRole = new Map<string, number>();
   for (const li of lineItems) hoursByRole.set(li.roleName, (hoursByRole.get(li.roleName) ?? 0) + li.hours);
