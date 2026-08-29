@@ -360,7 +360,7 @@ function ChatUI() {
                           onChange={() => toggleRole(role.id)}
                           className="h-4 w-4 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-400"
                         />
-                        <span className="flex-1">{role.name}</span>
+                        <span>{role.name}</span>
                         <div className="relative shrink-0">
                           <input
                             type="number"
