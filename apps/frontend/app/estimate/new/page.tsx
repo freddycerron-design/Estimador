@@ -4,7 +4,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
-import { Sparkles, Send, Plus, Hash, SlidersHorizontal, Loader2, FileText, X } from "lucide-react";
+import { Sparkles, Send, Plus, SlidersHorizontal, Loader2, FileText, X } from "lucide-react";
 import { RequireAuth } from "@/components/require-auth";
 import { PageHeader } from "@/components/page-header";
 import { btnPrimary, btnSecondary, cardPadded, input as inputClass } from "@/lib/ui-classes";
@@ -13,7 +13,6 @@ import {
   sendMessage,
   getConversation,
   getRequirement,
-  getRequirementByNumber,
   formatRequirementAsMessage,
   listSystemSettings,
   getEstimate,
@@ -95,8 +94,6 @@ function ChatUI() {
   const [sending, setSending] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(!!urlConversationId);
   const [error, setError] = useState<string | null>(null);
-  const [reqNumberInput, setReqNumberInput] = useState("");
-  const [reqNumberError, setReqNumberError] = useState<string | null>(null);
   // Info del requerimiento que se está considerando como input de esta estimación (spec pedido
   // por usuario) — null si esta conversación no vino de un requerimiento cargado.
   const [requirementContext, setRequirementContext] = useState<RequirementContextInfo | null>(null);
@@ -335,19 +332,6 @@ function ChatUI() {
     sendAbortRef.current?.abort();
   }
 
-  async function handleLoadByNumber(e: React.FormEvent) {
-    e.preventDefault();
-    setReqNumberError(null);
-    const number = reqNumberInput.trim().replace(/^REQ-/i, "");
-    if (!number) return;
-    try {
-      const requirement = await getRequirementByNumber(number);
-      router.push(`/estimate/new?req=${requirement.id}`);
-    } catch (err) {
-      setReqNumberError(err instanceof Error ? err.message : "No se encontró ese requerimiento");
-    }
-  }
-
   function startNewConversation() {
     setConversationId(null);
     setMessages([]);
@@ -499,27 +483,6 @@ function ChatUI() {
               </>
             )}
           </div>
-
-          {!urlRequirementId && !refineFromId && (
-            <div className="flex items-center gap-2 text-sm text-slate-500">
-              <span>¿Vas a estimar un requerimiento ya cargado?</span>
-              <form onSubmit={handleLoadByNumber} className="flex items-center gap-2">
-                <div className="relative">
-                  <Hash className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" strokeWidth={2} />
-                  <input
-                    value={reqNumberInput}
-                    onChange={(e) => setReqNumberInput(e.target.value)}
-                    placeholder="Número de requerimiento"
-                    className={`${inputClass} w-44 pl-7 text-sm`}
-                  />
-                </div>
-                <button type="submit" className={btnSecondary}>
-                  Cargar
-                </button>
-              </form>
-              {reqNumberError && <span className="text-xs text-red-600">{reqNumberError}</span>}
-            </div>
-          )}
         </div>
       ) : (
         <>
