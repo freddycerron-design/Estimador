@@ -8,7 +8,14 @@ import { invalidateAgentPromptCache } from "../../config/agent-prompt.js";
 const CreateVersionBody = z.object({
   content: z.string().trim().min(1, "El prompt no puede estar vacío"),
   note: z.string().trim().min(1).optional(),
+  password: z.string(),
 });
+
+// Password adicional pedido por el usuario para guardar una nueva versión del prompt — más allá
+// del rol admin, una segunda confirmación explícita antes de cambiar el comportamiento de TODAS
+// las conversaciones. No es un mecanismo de autenticación real (valor fijo, no por-usuario);
+// es una traba deliberada contra guardar por accidente, no contra un atacante.
+const AGENT_PROMPT_EDIT_PASSWORD = "bit2027";
 
 /**
  * Hace editable el system prompt del orquestador (spec pedido por usuario) — versionado igual
@@ -34,6 +41,10 @@ export default async function agentPromptRoutes(app: FastifyInstance) {
   app.post("/admin/agent-prompt/versions", async (req, reply) => {
     if (!(await requireAdmin(req, reply))) return;
     const body = CreateVersionBody.parse(req.body);
+    if (body.password !== AGENT_PROMPT_EDIT_PASSWORD) {
+      reply.code(403);
+      return { error: "Password incorrecto." };
+    }
 
     const existing = await unwrap<AgentPromptVersionRow[]>(
       "select:agent_prompt_versions:latest",

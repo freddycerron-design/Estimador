@@ -430,6 +430,7 @@ function AgentPromptSection() {
   const [active, setActive] = useState<AgentPromptVersionDTO | null>(null);
   const [draft, setDraft] = useState("");
   const [note, setNote] = useState("");
+  const [password, setPassword] = useState("");
   const [expanded, setExpanded] = useState(false);
   const [history, setHistory] = useState<AgentPromptVersionDTO[] | null>(null);
   const [saving, setSaving] = useState(false);
@@ -455,10 +456,15 @@ function AgentPromptSection() {
       setError("El prompt no puede estar vacío.");
       return;
     }
+    if (!password) {
+      setError("Ingresa el password para guardar cambios en el prompt.");
+      return;
+    }
     setSaving(true);
     try {
-      await createAgentPromptVersion(draft, note.trim() || undefined);
+      await createAgentPromptVersion(draft, password, note.trim() || undefined);
       setNote("");
+      setPassword("");
       setHistory(null);
       reload();
       if (expanded) listAgentPromptVersions().then(setHistory);
@@ -493,6 +499,14 @@ function AgentPromptSection() {
       />
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <input value={note} onChange={(e) => setNote(e.target.value)} className={`${input} max-w-xs`} placeholder="Nota (opcional) — motivo del cambio…" />
+        <input
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          type="password"
+          autoComplete="off"
+          className={`${input} max-w-[180px]`}
+          placeholder="Password para guardar"
+        />
         <button onClick={handleSave} disabled={saving || !dirty} className={btnPrimary}>
           <Save className="h-3.5 w-3.5" strokeWidth={2} />
           {saving ? "Guardando…" : "Guardar y activar nueva versión"}

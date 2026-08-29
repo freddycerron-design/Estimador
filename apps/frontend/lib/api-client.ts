@@ -549,6 +549,6 @@ export function listAgentPromptVersions() {
   return apiFetch<AgentPromptVersionDTO[]>(`/admin/agent-prompt/versions`);
 }
 
-export function createAgentPromptVersion(content: string, note?: string) {
-  return apiFetch<AgentPromptVersionDTO>(`/admin/agent-prompt/versions`, { method: "POST", body: JSON.stringify({ content, note }) });
+export function createAgentPromptVersion(content: string, password: string, note?: string) {
+  return apiFetch<AgentPromptVersionDTO>(`/admin/agent-prompt/versions`, { method: "POST", body: JSON.stringify({ content, password, note }) });
 }
