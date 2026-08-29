@@ -12,7 +12,8 @@ export async function persistEstimate(
   template: string,
   bundle: EstimationBundle,
   parameters: EstimationParameters,
-  includedRoleIds: string[] | null
+  includedRoleIds: string[] | null,
+  roleAllocationOverrides: Record<string, number> | null
 ): Promise<string> {
   // El proyecto NUEVO que se está estimando también necesita su propia fila en `projects`
   // (status='active_estimate') — sin esto no hay dónde enganchar `project_actuals` cuando
@@ -82,6 +83,8 @@ export async function persistEstimate(
           parameters,
           // Roles efectivamente incluidos en el desglose — mismo criterio, congelado para refinamiento.
           included_role_ids: includedRoleIds,
+          // % de asignación por rol efectivamente usado — mismo criterio, congelado para refinamiento.
+          role_allocation_overrides: roleAllocationOverrides,
         },
       ])
       .select("id")

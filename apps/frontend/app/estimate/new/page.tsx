@@ -134,6 +134,13 @@ function ChatUI() {
           const previousRoleIds = estimate.included_role_ids as string[] | null | undefined;
           if (!cancelled) setIncludedRoleIds(new Set(previousRoleIds && previousRoleIds.length > 0 ? previousRoleIds : allRoles.map((r) => r.id)));
 
+          // % de asignación editado la vez anterior — pisa el % global para los roles que se
+          // hayan tocado (spec pedido por usuario: editable y guardado en la estimación).
+          const previousAllocationOverrides = estimate.role_allocation_overrides as Record<string, number> | null | undefined;
+          if (previousAllocationOverrides && !cancelled) {
+            setAllocationPctByRole((prev) => ({ ...prev, ...previousAllocationOverrides }));
+          }
+
           const projectId = estimate.project_id as string | null | undefined;
           if (projectId) {
             try {
@@ -189,7 +196,7 @@ function ChatUI() {
       const parameters: EstimationParameters = paramForm;
       const roleIds = Array.from(includedRoleIds);
       if (urlRequirementId) {
-        const conv = await createConversation("Estimación desde requerimiento", urlRequirementId, parameters, roleIds);
+        const conv = await createConversation("Estimación desde requerimiento", urlRequirementId, parameters, roleIds, allocationPctByRole);
         setConversationId(conv.id);
         setParamsConfirmed(true);
         router.replace(`/estimate/new?c=${conv.id}`);
@@ -203,7 +210,7 @@ function ChatUI() {
         setSending(false);
       } else {
         const title = refineFromId ? "Refinamiento de estimación" : "Nueva estimación";
-        const conv = await createConversation(title, undefined, parameters, roleIds);
+        const conv = await createConversation(title, undefined, parameters, roleIds, allocationPctByRole);
         setConversationId(conv.id);
         setParamsConfirmed(true);
         router.replace(`/estimate/new?c=${conv.id}`);
@@ -341,23 +348,35 @@ function ChatUI() {
                   <h3 className="mb-1 text-sm font-medium text-slate-700">Roles a incluir en el desglose</h3>
                   <p className="mb-3 text-xs text-slate-400">
                     Desmarca los roles que no quieras que aparezcan en el esfuerzo por fase y rol de esta estimación. Si no desmarcas ninguno, se
-                    incluyen todos (comportamiento estándar). El % junto a cada rol es su asignación configurada al proyecto — no siempre es 100%, y
-                    se considera en el cálculo de tiempo y costo.
+                    incluyen todos (comportamiento estándar). El % junto a cada rol es su asignación al proyecto — no siempre es 100%, se considera
+                    en el cálculo de tiempo y costo, y puedes editarlo solo para esta estimación.
                   </p>
                   <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     {roles.map((role) => (
-                      <label key={role.id} className="flex items-center gap-2 text-sm text-slate-600">
+                      <div key={role.id} className="flex items-center gap-2 text-sm text-slate-600">
                         <input
                           type="checkbox"
                           checked={includedRoleIds.has(role.id)}
                           onChange={() => toggleRole(role.id)}
                           className="h-4 w-4 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-400"
                         />
-                        {role.name}
-                        <span className="text-xs text-slate-400">
-                          ({Math.round((allocationPctByRole[role.id] ?? 1) * 100)}% asignación)
-                        </span>
-                      </label>
+                        <span className="flex-1">{role.name}</span>
+                        <div className="relative shrink-0">
+                          <input
+                            type="number"
+                            min={1}
+                            max={100}
+                            step="any"
+                            value={Math.round((allocationPctByRole[role.id] ?? 1) * 100)}
+                            onChange={(e) => {
+                              const pct = Math.min(1, Math.max(0.01, Number(e.target.value) / 100));
+                              setAllocationPctByRole((prev) => ({ ...prev, [role.id]: pct }));
+                            }}
+                            className={`${inputClass} w-16 pr-5 text-xs`}
+                          />
+                          <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>

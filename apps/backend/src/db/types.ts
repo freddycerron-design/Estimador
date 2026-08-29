@@ -91,6 +91,8 @@ export interface ConversationRow {
   parameters: EstimationParameters | null;
   /** Roles a incluir en el desglose de esfuerzo de esta conversación. Null = sin filtrar (todos, comportamiento actual). */
   included_role_ids: string[] | null;
+  /** % de asignación por rol editado por el usuario para esta conversación (roleId -> 0-1). Null = usa el % global de cost_rates. */
+  role_allocation_overrides: Record<string, number> | null;
 }
 
 export interface RequirementRow {
@@ -199,6 +201,8 @@ export interface ProjectEstimateRow {
   parameters: EstimationParameters | null;
   /** Roles efectivamente incluidos en el desglose de esfuerzo. Null = sin filtrar (todos). */
   included_role_ids: string[] | null;
+  /** % de asignación por rol EFECTIVAMENTE usado (merge final override+global), congelado para trazabilidad y refinamiento. */
+  role_allocation_overrides: Record<string, number> | null;
 }
 
 export interface EstimateLineItemRow {

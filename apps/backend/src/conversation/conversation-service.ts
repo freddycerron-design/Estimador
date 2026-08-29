@@ -20,7 +20,8 @@ export async function createConversation(
   title?: string,
   requirementId?: string,
   parameters?: EstimationParameters,
-  includedRoleIds?: string[] | null
+  includedRoleIds?: string[] | null,
+  roleAllocationOverrides?: Record<string, number> | null
 ): Promise<ConversationRow> {
   const [conversation] = await unwrap<ConversationRow[]>(
     "insert:conversations",
@@ -35,6 +36,7 @@ export async function createConversation(
           requirement_id: requirementId ?? null,
           parameters: parameters ?? null,
           included_role_ids: includedRoleIds ?? null,
+          role_allocation_overrides: roleAllocationOverrides ?? null,
         },
       ])
       .select()
@@ -92,6 +94,7 @@ export async function sendMessage(conversationId: string, userText: string): Pro
     conversationId,
     parameters: conversation.parameters,
     includedRoleIds: conversation.included_role_ids,
+    roleAllocationOverrides: conversation.role_allocation_overrides,
   });
 
   const rowsToInsert = turn.newMessages.map((msg) => ({ conversation_id: conversationId, ...toDbMessage(msg) }));

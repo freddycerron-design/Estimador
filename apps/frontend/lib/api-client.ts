@@ -34,6 +34,7 @@ export interface ConversationDTO {
   created_at: string;
   parameters?: EstimationParameters | null;
   included_role_ids?: string[] | null;
+  role_allocation_overrides?: Record<string, number> | null;
 }
 
 /**
@@ -41,9 +42,20 @@ export interface ConversationDTO {
  * pedido por usuario) — opcional, si se omite se usa el default global de siempre.
  * `includedRoleIds`: roles a incluir en el desglose de esfuerzo — opcional, si se omite o llega
  * vacío no se filtra (todos los roles, comportamiento actual).
+ * `roleAllocationOverrides`: % de asignación por rol editado por el usuario — opcional, si se
+ * omite se usa el % global vigente en cost_rates para cada rol.
  */
-export function createConversation(title?: string, requirementId?: string, parameters?: EstimationParameters, includedRoleIds?: string[]) {
-  return apiFetch<ConversationDTO>("/conversations", { method: "POST", body: JSON.stringify({ title, requirementId, parameters, includedRoleIds }) });
+export function createConversation(
+  title?: string,
+  requirementId?: string,
+  parameters?: EstimationParameters,
+  includedRoleIds?: string[],
+  roleAllocationOverrides?: Record<string, number>
+) {
+  return apiFetch<ConversationDTO>("/conversations", {
+    method: "POST",
+    body: JSON.stringify({ title, requirementId, parameters, includedRoleIds, roleAllocationOverrides }),
+  });
 }
 
 // --- Usuario actual (para saber si mostrar la sección de Administración) ---

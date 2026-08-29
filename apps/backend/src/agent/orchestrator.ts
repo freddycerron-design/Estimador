@@ -40,6 +40,8 @@ export async function runAgentTurn(params: {
   parameters?: EstimationParameters | null;
   /** Roles a incluir en el desglose de esfuerzo (conversations.included_role_ids). Null/vacío = todos. */
   includedRoleIds?: string[] | null;
+  /** % de asignación por rol editado por el usuario (conversations.role_allocation_overrides). Null = usa el % global. */
+  roleAllocationOverrides?: Record<string, number> | null;
 }): Promise<AgentTurnResult> {
   const llm = createOrchestratorProvider();
   const tools = toolDefinitions();
@@ -89,7 +91,18 @@ export async function runAgentTurn(params: {
         if (call.name === "estimate_effort_duration") {
           const lastAnalysis = [...toolTrace].reverse().find((t) => t.toolName === "analyze_requirement" && !t.error);
           const projectType = (lastAnalysis?.output as { projectType?: string | null } | undefined)?.projectType;
-          toolInput = { ...(call.input as object), ...(projectType ? { projectType } : {}), includedRoleIds: params.includedRoleIds ?? null };
+          toolInput = {
+            ...(call.input as object),
+            ...(projectType ? { projectType } : {}),
+            includedRoleIds: params.includedRoleIds ?? null,
+            roleAllocationOverrides: params.roleAllocationOverrides ?? null,
+          };
+        }
+
+        // calculate_cost también refleja el % de asignación editado por el usuario (para que el
+        // desglose de costo mostrado quede consistente con lo que se usó en el esfuerzo/duración).
+        if (call.name === "calculate_cost") {
+          toolInput = { ...(call.input as object), roleAllocationOverrides: params.roleAllocationOverrides ?? null };
         }
 
         if (call.name === "generate_report") {
@@ -106,7 +119,14 @@ export async function runAgentTurn(params: {
           // `ctx.settings` de report-generation ya trae el merge (global + overrides) aplicado
           // por buildSkillContext — congelamos ese mismo snapshot, no solo la intención del usuario.
           const effectiveParameters = resolveEffectiveParameters(ctx.settings, params.parameters);
-          const estimateId = await persistEstimate(params.conversationId, template, bundle, effectiveParameters, params.includedRoleIds ?? null);
+          const estimateId = await persistEstimate(
+            params.conversationId,
+            template,
+            bundle,
+            effectiveParameters,
+            params.includedRoleIds ?? null,
+            params.roleAllocationOverrides ?? null
+          );
           extraOutputFields = { estimateId };
         }
 

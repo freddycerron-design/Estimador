@@ -13,13 +13,16 @@ const CreateConversationBody = z.object({
   // Roles a incluir en el desglose de esfuerzo (spec pedido por usuario) — opcional, si no
   // viene o llega vacío no se filtra (comportamiento actual, todos los roles).
   includedRoleIds: z.array(z.string().uuid()).optional(),
+  // % de asignación por rol editado por el usuario (spec pedido por usuario) — opcional, si no
+  // viene se usa el % global vigente en cost_rates para cada rol.
+  roleAllocationOverrides: z.record(z.string().uuid(), z.number().min(0.01).max(1)).optional(),
 });
 const SendMessageBody = z.object({ text: z.string().min(1) });
 
 export default async function conversationsRoutes(app: FastifyInstance) {
   app.post("/conversations", async (req, reply) => {
     const body = CreateConversationBody.parse(req.body ?? {});
-    const conversation = await createConversation(req.userId, body.title, body.requirementId, body.parameters, body.includedRoleIds);
+    const conversation = await createConversation(req.userId, body.title, body.requirementId, body.parameters, body.includedRoleIds, body.roleAllocationOverrides);
     reply.code(201);
     return conversation;
   });

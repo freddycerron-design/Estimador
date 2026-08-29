@@ -39,10 +39,18 @@ const InputSchema = z.object({
   projectType: z.string().nullable().optional(),
   /** Roles a incluir en el desglose (conversations.included_role_ids) — null/vacío = todos, sin filtrar. */
   includedRoleIds: z.array(z.string().uuid()).nullable().optional(),
+  /** % de asignación por rol editado por el usuario (conversations.role_allocation_overrides) — pisa el % global de cost_rates para el rol indicado. */
+  roleAllocationOverrides: z.record(z.string(), z.number()).nullable().optional(),
 });
 
 export const estimationSkill = defineSkill<
-  { usableCandidates: SimilarityCandidate[]; missingInformationCount?: number; projectType?: string | null; includedRoleIds?: string[] | null },
+  {
+    usableCandidates: SimilarityCandidate[];
+    missingInformationCount?: number;
+    projectType?: string | null;
+    includedRoleIds?: string[] | null;
+    roleAllocationOverrides?: Record<string, number> | null;
+  },
   EstimationOutput
 >({
   key: "estimation",
@@ -51,7 +59,7 @@ export const estimationSkill = defineSkill<
     "Calcula esfuerzo (horas por fase y rol), duración, rango (optimista/probable/pesimista) y nivel de confianza, ponderando por similitud las referencias históricas usables. Requiere que project-similarity ya haya determinado referencias por encima del umbral.",
   inputSchema: zodToJsonSchema(InputSchema) as any,
   async execute(input, ctx) {
-    const { usableCandidates, includedRoleIds } = InputSchema.parse(input);
+    const { usableCandidates, includedRoleIds, roleAllocationOverrides } = InputSchema.parse(input);
     const missingInformationCount = input.missingInformationCount ?? 0;
 
     const projectIds = usableCandidates.map((c) => c.projectId);
@@ -98,6 +106,10 @@ export const estimationSkill = defineSkill<
     // botella de duración por baja dedicación (ver estimation-engine.ts).
     const allocationPctByRole = new Map<string, number>();
     for (const [roleId, row] of rates) allocationPctByRole.set(roleId, Number(row.allocation_pct ?? 1));
+    // El % editado por el usuario para esta estimación pisa el % global (spec pedido por usuario).
+    if (roleAllocationOverrides) {
+      for (const [roleId, pct] of Object.entries(roleAllocationOverrides)) allocationPctByRole.set(roleId, pct);
+    }
     const standardWeeklyHours = getSetting(ctx.settings, "STANDARD_WEEKLY_HOURS", 40);
     const historicalProbableWeeks = weightedDurationWeeks(references);
     const projectManagementPhase = [...lookup.phasesById.values()].find((p) => p.name === "Gestión de Proyecto");

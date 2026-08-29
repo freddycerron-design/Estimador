@@ -19,10 +19,12 @@ const InputSchema = z.object({
   lineItems: z.array(LineItemSchema),
   effortHoursRange: z.object({ optimistic: z.number(), probable: z.number(), pessimistic: z.number() }),
   currency: z.string().default("USD"),
+  /** % de asignación por rol editado por el usuario (conversations.role_allocation_overrides) — pisa el % global de cost_rates para el rol indicado. */
+  roleAllocationOverrides: z.record(z.string(), z.number()).nullable().optional(),
 });
 
 export const costCalculationSkill = defineSkill<
-  { lineItems: EstimateLineItem[]; effortHoursRange: EffortRange; currency?: string },
+  { lineItems: EstimateLineItem[]; effortHoursRange: EffortRange; currency?: string; roleAllocationOverrides?: Record<string, number> | null },
   CostBreakdown
 >({
   key: "cost-calculation",
@@ -48,7 +50,7 @@ export const costCalculationSkill = defineSkill<
     let laborCost = 0;
     for (const [roleId, { name, hours }] of hoursByRole) {
       const rate = Number(rates.get(roleId)?.rate_per_hour ?? 40);
-      const allocationPct = Number(rates.get(roleId)?.allocation_pct ?? 1);
+      const allocationPct = parsed.roleAllocationOverrides?.[roleId] ?? Number(rates.get(roleId)?.allocation_pct ?? 1);
       const cost = hours * rate;
       laborCost += cost;
       byRole.push({ roleId, roleName: name, hours, ratePerHour: rate, allocationPct, cost: Math.round(cost) });
