@@ -33,6 +33,10 @@ export const ESTIMATION_PARAMETER_LABELS: Record<EstimationParameterKey, string>
 // criterio que /admin. El resto (iteraciones, z-score) se muestra tal cual, sin conversión.
 export const ESTIMATION_PARAMETER_PERCENT_KEYS = new Set<EstimationParameterKey>(["MIN_SIMILARITY_THRESHOLD", "DEFAULT_CONTINGENCY_PCT", "DEFAULT_OVERHEAD_PCT"]);
 
+// Claves cuyo VALOR el usuario puede editar por-estimación (spec pedido por usuario) — las otras
+// 3 quedan siempre marcadas/aplicadas con el valor global vigente, sin poder tocarlo acá.
+export const ESTIMATION_PARAMETER_VALUE_EDITABLE_KEYS = new Set<EstimationParameterKey>(["DEFAULT_CONTINGENCY_PCT", "DEFAULT_OVERHEAD_PCT"]);
+
 /** Fallback si `/admin/config/system-settings` no trajera alguna clave — mismo default que `DEFAULT_SYSTEM_SETTINGS` en el backend. */
 export const ESTIMATION_PARAMETER_FALLBACKS: Record<EstimationParameterKey, number> = {
   MIN_SIMILARITY_THRESHOLD: 0.75,

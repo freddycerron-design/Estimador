@@ -28,6 +28,7 @@ import {
   ESTIMATION_PARAMETER_LABELS,
   ESTIMATION_PARAMETER_FALLBACKS,
   ESTIMATION_PARAMETER_PERCENT_KEYS,
+  ESTIMATION_PARAMETER_VALUE_EDITABLE_KEYS,
   emptyEstimationParameterForm,
   type EstimationParameterEntry,
   type EstimationParameterKey,
@@ -304,6 +305,9 @@ function ChatUI() {
                 <div className="space-y-3">
                   {ESTIMATION_PARAMETER_KEYS.map((key) => {
                     const isPercent = ESTIMATION_PARAMETER_PERCENT_KEYS.has(key);
+                    // Solo Contingencia y Overhead se pueden editar por-estimación (spec pedido por
+                    // usuario) — el resto queda siempre aplicado con el valor global, sin poder tocarlo.
+                    const isValueEditable = ESTIMATION_PARAMETER_VALUE_EDITABLE_KEYS.has(key);
                     return (
                       <div key={key} className="flex items-center gap-3">
                         <input
@@ -318,7 +322,7 @@ function ChatUI() {
                             type="number"
                             step="any"
                             value={isPercent ? paramForm[key].value * 100 : paramForm[key].value}
-                            disabled={!paramForm[key].included}
+                            disabled={!paramForm[key].included || !isValueEditable}
                             onChange={(e) => updateParam(key, { value: isPercent ? Number(e.target.value) / 100 : Number(e.target.value) })}
                             className={`${inputClass} max-w-[140px] disabled:bg-slate-50 disabled:text-slate-400 ${isPercent ? "pr-7" : ""}`}
                           />
