@@ -339,6 +339,12 @@ function ChatUI() {
                           />
                           {isPercent && <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-slate-400">%</span>}
                         </div>
+                        {key === "DEFAULT_CONTINGENCY_PCT" && (
+                          <span className="flex-1 text-xs text-slate-500">
+                            Contingencia (15% por defecto): Es un colchón de riesgo — margen para imprevistos, cambios de alcance, o error de
+                            estimación. Es la reserva por si algo sale distinto a lo planeado, no un costo operativo fijo.
+                          </span>
+                        )}
                       </div>
                     );
                   })}
