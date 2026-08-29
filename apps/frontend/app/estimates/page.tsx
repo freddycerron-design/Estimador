@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { FileText, ArrowRight, RefreshCw } from "lucide-react";
+import { FileText, ArrowRight, RefreshCw, Plus } from "lucide-react";
 import { RequireAuth } from "@/components/require-auth";
 import { PageHeader } from "@/components/page-header";
-import { card } from "@/lib/ui-classes";
+import { btnPrimary, card } from "@/lib/ui-classes";
 import { listEstimates, type EstimateSummaryDTO } from "@/lib/api-client";
 
 function confidenceBadge(score: string | null): { label: string; className: string } {
@@ -28,7 +28,17 @@ function EstimatesList() {
 
   return (
     <div>
-      <PageHeader icon={FileText} title="Estimaciones" subtitle="Todas las estimaciones generadas por el agente." />
+      <PageHeader
+        icon={FileText}
+        title="Estimaciones"
+        subtitle="Todas las estimaciones generadas por el agente."
+        actions={
+          <Link href="/estimate/new" className={btnPrimary}>
+            <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+            Estimación sin requerimiento registrado
+          </Link>
+        }
+      />
       {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
       <div className={`${card} overflow-hidden`}>
         <table className="w-full text-sm">
@@ -80,7 +90,11 @@ function EstimatesList() {
             })}
           </tbody>
         </table>
-        {estimates.length === 0 && !error && <p className="p-6 text-center text-sm text-slate-400">Aún no hay estimaciones. Crea una en &ldquo;Nueva estimación&rdquo;.</p>}
+        {estimates.length === 0 && !error && (
+          <p className="p-6 text-center text-sm text-slate-400">
+            Aún no hay estimaciones. Crea una desde un requerimiento registrado, o con &ldquo;Estimación sin requerimiento registrado&rdquo; arriba.
+          </p>
+        )}
       </div>
     </div>
   );

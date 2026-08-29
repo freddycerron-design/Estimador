@@ -4,7 +4,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
-import { Sparkles, Send, Plus, Hash, SlidersHorizontal, Loader2 } from "lucide-react";
+import { Sparkles, Send, Plus, Hash, SlidersHorizontal, Loader2, FileText, X } from "lucide-react";
 import { RequireAuth } from "@/components/require-auth";
 import { PageHeader } from "@/components/page-header";
 import { btnPrimary, btnSecondary, cardPadded, input as inputClass } from "@/lib/ui-classes";
@@ -22,6 +22,8 @@ import {
   listCostRates,
   listRequirementAttachments,
   type RoleDTO,
+  type RequirementDTO,
+  type RequirementAttachmentDTO,
 } from "@/lib/api-client";
 import {
   ESTIMATION_PARAMETER_KEYS,
@@ -43,6 +45,43 @@ interface ChatMessage {
 
 type ParameterForm = Record<EstimationParameterKey, EstimationParameterEntry>;
 
+// Resumen de lo que efectivamente se le envía al agente como primer input cuando la estimación
+// arranca desde un requerimiento cargado (spec pedido por usuario: mostrar título, descripción, y
+// dejar explícito que se considera TODA la información del requerimiento + adjuntos) — se muestra
+// como una tarjeta aparte, no como el mensaje de chat en sí (que sigue llevando el texto completo,
+// incluido el contenido de los adjuntos, para que el agente lo lea).
+interface RequirementContextInfo {
+  title: string;
+  description: string;
+  detailsLine: string | null;
+  attachments: { filename: string; ok: boolean }[];
+}
+
+function buildRequirementContext(r: RequirementDTO, attachments: RequirementAttachmentDTO[]): RequirementContextInfo {
+  const details: string[] = [];
+  if (r.project_type) details.push(`Tipo de proyecto: ${r.project_type}`);
+  if (r.industry) details.push(`Industria: ${r.industry}`);
+  if (r.technologies.length) details.push(`Tecnologías: ${r.technologies.join(", ")}`);
+  if (r.modules.length) details.push(`Módulos: ${r.modules.join(", ")}`);
+  if (r.integrations.length) details.push(`Integraciones: ${r.integrations.join(", ")}`);
+  if (r.num_users !== null && r.num_users !== undefined) details.push(`Usuarios: ${r.num_users}`);
+  if (r.num_interfaces !== null && r.num_interfaces !== undefined) details.push(`Interfaces: ${r.num_interfaces}`);
+  if (r.complexity) details.push(`Complejidad: ${r.complexity}`);
+  return {
+    title: r.title,
+    description: r.description,
+    detailsLine: details.length > 0 ? details.join(" · ") : null,
+    attachments: attachments.map((a) => ({ filename: a.filename, ok: a.extraction_status === "ok" })),
+  };
+}
+
+function isAbortError(err: unknown): boolean {
+  return err instanceof DOMException && err.name === "AbortError";
+}
+
+const CANCELLED_NOTICE =
+  "_Se canceló la espera de esta respuesta. El agente puede seguir procesando del lado del servidor — si termina, el resultado quedará guardado en el historial de esta conversación aunque no lo veas acá._";
+
 function ChatUI() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -58,7 +97,13 @@ function ChatUI() {
   const [error, setError] = useState<string | null>(null);
   const [reqNumberInput, setReqNumberInput] = useState("");
   const [reqNumberError, setReqNumberError] = useState<string | null>(null);
+  // Info del requerimiento que se está considerando como input de esta estimación (spec pedido
+  // por usuario) — null si esta conversación no vino de un requerimiento cargado.
+  const [requirementContext, setRequirementContext] = useState<RequirementContextInfo | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  // Permite cancelar la ESPERA de la respuesta en curso (spec pedido por usuario) — ver botón
+  // "Cancelar" junto al indicador de "Analizando…".
+  const sendAbortRef = useRef<AbortController | null>(null);
 
   // Panel de parámetros de estimación: se muestra ANTES de arrancar la conversación (spec pedido
   // por usuario). Si ya venimos de una conversación existente (?c=) no hay nada que decidir —
@@ -85,9 +130,28 @@ function ChatUI() {
   useEffect(() => {
     if (!urlConversationId) return;
     getConversation(urlConversationId)
-      .then(({ messages: history, estimateIds }) => {
+      .then(async ({ conversation, messages: history, estimateIds }) => {
         const lastEstimateId = estimateIds[0];
-        const restored: ChatMessage[] = history
+
+        // Si esta conversación arrancó desde un requerimiento, reconstruir la misma tarjeta de
+        // contexto que se muestra al iniciarla — y quitar del historial visible el primer mensaje
+        // user (el volcado completo título+descripción+adjuntos), que esa tarjeta reemplaza.
+        let history_ = history;
+        if (conversation.requirement_id) {
+          const firstUserIdx = history_.findIndex((m) => m.role === "user");
+          if (firstUserIdx !== -1) history_ = history_.filter((_, i) => i !== firstUserIdx);
+          try {
+            const [requirement, attachments] = await Promise.all([
+              getRequirement(conversation.requirement_id),
+              listRequirementAttachments(conversation.requirement_id),
+            ]);
+            setRequirementContext(buildRequirementContext(requirement, attachments));
+          } catch {
+            // Si el requerimiento ya no existe (borrado, etc.) no bloquea ver el resto del historial.
+          }
+        }
+
+        const restored: ChatMessage[] = history_
           .filter((m) => m.role === "user" || m.role === "assistant")
           .map((m, i, arr) => ({
             role: m.role as "user" | "assistant",
@@ -202,12 +266,28 @@ function ChatUI() {
         router.replace(`/estimate/new?c=${conv.id}`);
 
         const [requirement, attachments] = await Promise.all([getRequirement(urlRequirementId), listRequirementAttachments(urlRequirementId)]);
-        const text = formatRequirementAsMessage(requirement, attachments);
-        setMessages([{ role: "user", text }]);
+        // El agente sigue recibiendo el texto completo (título+descripción+campos+adjuntos) — la
+        // tarjeta de contexto es solo la vista compacta que se le muestra al usuario (spec pedido
+        // por usuario: mostrar qué se está considerando, sin volcar el contenido crudo al chat).
+        const fullText = formatRequirementAsMessage(requirement, attachments);
+        setRequirementContext(buildRequirementContext(requirement, attachments));
+        setMessages([]);
         setSending(true);
-        const result = await sendMessage(conv.id, text);
-        setMessages((prev) => [...prev, { role: "assistant", text: result.assistantText, estimateId: result.estimateId }]);
-        setSending(false);
+        const controller = new AbortController();
+        sendAbortRef.current = controller;
+        try {
+          const result = await sendMessage(conv.id, fullText, controller.signal);
+          setMessages((prev) => [...prev, { role: "assistant", text: result.assistantText, estimateId: result.estimateId }]);
+        } catch (err) {
+          if (isAbortError(err)) {
+            setMessages((prev) => [...prev, { role: "assistant", text: CANCELLED_NOTICE }]);
+          } else {
+            throw err;
+          }
+        } finally {
+          setSending(false);
+          sendAbortRef.current = null;
+        }
       } else {
         const title = refineFromId ? "Refinamiento de estimación" : "Nueva estimación";
         const conv = await createConversation(title, undefined, parameters, roleIds, allocationPctByRole);
@@ -231,15 +311,28 @@ function ChatUI() {
     setError(null);
     setMessages((prev) => [...prev, { role: "user", text }]);
     setSending(true);
+    const controller = new AbortController();
+    sendAbortRef.current = controller;
     try {
       const convId = await ensureConversation();
-      const result = await sendMessage(convId, text);
+      const result = await sendMessage(convId, text, controller.signal);
       setMessages((prev) => [...prev, { role: "assistant", text: result.assistantText, estimateId: result.estimateId }]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Ocurrió un error inesperado");
+      if (isAbortError(err)) {
+        setMessages((prev) => [...prev, { role: "assistant", text: CANCELLED_NOTICE }]);
+      } else {
+        setError(err instanceof Error ? err.message : "Ocurrió un error inesperado");
+      }
     } finally {
       setSending(false);
+      sendAbortRef.current = null;
     }
+  }
+
+  // Cancela la ESPERA de la respuesta en curso (spec pedido por usuario) — el fetch se aborta en
+  // el navegador; el turno del agente puede seguir corriendo del lado del servidor hasta terminar.
+  function handleCancel() {
+    sendAbortRef.current?.abort();
   }
 
   async function handleLoadByNumber(e: React.FormEvent) {
@@ -258,6 +351,7 @@ function ChatUI() {
   function startNewConversation() {
     setConversationId(null);
     setMessages([]);
+    setRequirementContext(null);
     setParamsConfirmed(false);
     setPrefillText(null);
     setInput("");
@@ -431,7 +525,7 @@ function ChatUI() {
         <>
           <div className="flex-1 space-y-4 overflow-y-auto rounded-xl border border-slate-200 bg-slate-100 p-4 shadow-inner">
             {loadingHistory && messages.length === 0 && <p className="text-sm text-slate-400">Cargando conversación…</p>}
-            {!loadingHistory && messages.length === 0 && (
+            {!loadingHistory && messages.length === 0 && !requirementContext && (
               <div className="flex h-full flex-col items-center justify-center text-center">
                 <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-100">
                   <Sparkles className="h-6 w-6 text-accent-600" strokeWidth={2} />
@@ -440,6 +534,28 @@ function ChatUI() {
                   Describe el requerimiento del proyecto (mientras más detalle, mejor referencia histórica encontraré). Ejemplo:
                   &ldquo;Necesitamos una app web para gestionar solicitudes de compra, integrada con nuestro ERP, con 5 tipos de
                   usuario&rdquo;.
+                </p>
+              </div>
+            )}
+            {requirementContext && (
+              <div className="rounded-xl border border-accent-200 bg-accent-50/70 p-4 shadow-sm">
+                <div className="mb-2 flex items-center gap-2">
+                  <FileText className="h-4 w-4 shrink-0 text-accent-600" strokeWidth={2} />
+                  <span className="text-xs font-semibold uppercase tracking-wide text-accent-700">Información considerada para esta estimación</span>
+                </div>
+                <p className="font-medium text-slate-900">{requirementContext.title}</p>
+                <p className="mt-1 whitespace-pre-line text-sm text-slate-600">{requirementContext.description}</p>
+                {requirementContext.detailsLine && <p className="mt-2 text-xs text-slate-500">{requirementContext.detailsLine}</p>}
+                <p className="mt-2 text-xs text-slate-500">
+                  Se está considerando toda la información registrada de este requerimiento
+                  {requirementContext.attachments.length > 0 && (
+                    <>
+                      {" "}
+                      y el contenido de {requirementContext.attachments.length} archivo{requirementContext.attachments.length > 1 ? "s" : ""} adjunto
+                      {requirementContext.attachments.length > 1 ? "s" : ""}: {requirementContext.attachments.map((a) => a.filename).join(", ")}
+                    </>
+                  )}
+                  .
                 </p>
               </div>
             )}
@@ -468,6 +584,14 @@ function ChatUI() {
                 <div className="flex items-center gap-2.5 rounded-2xl rounded-tl-sm bg-white px-4 py-3 text-sm text-slate-500 shadow-sm">
                   <Loader2 className="h-4 w-4 shrink-0 animate-spin text-accent-500" strokeWidth={2.5} />
                   Analizando… esto puede tardar hasta un minuto (busca referencias, estima, calcula costos).
+                  <button
+                    onClick={handleCancel}
+                    className="ml-1 flex shrink-0 items-center gap-1 rounded-full border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                    title="Deja de esperar la respuesta — el agente puede seguir procesando en el servidor"
+                  >
+                    <X className="h-3 w-3" strokeWidth={2.5} />
+                    Cancelar
+                  </button>
                 </div>
               </div>
             )}

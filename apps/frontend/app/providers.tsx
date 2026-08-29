@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FileText, FolderKanban, Brain, LogOut, Plus, ClipboardList, Settings } from "lucide-react";
+import { FileText, FolderKanban, Brain, LogOut, ClipboardList, Settings } from "lucide-react";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { getMe } from "@/lib/api-client";
 
@@ -58,13 +58,6 @@ function NavBar() {
                 </Link>
               );
             })}
-            <Link
-              href="/estimate/new"
-              className="ml-2 flex items-center gap-1.5 rounded-full bg-brand-500 px-4 py-1.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-600"
-            >
-              <Plus className="h-4 w-4" strokeWidth={2.5} />
-              Nueva estimación
-            </Link>
             <div className="ml-3 flex items-center gap-2 border-l border-white/20 pl-3">
               <span className="hidden text-xs text-white/60 sm:inline">{user.email}</span>
               <button onClick={() => signOut()} className="rounded-full p-1.5 text-white/60 hover:bg-white/10 hover:text-white" title="Cerrar sesión">

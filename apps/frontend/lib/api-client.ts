@@ -32,6 +32,7 @@ export interface ConversationDTO {
   title: string | null;
   status: string;
   created_at: string;
+  requirement_id?: string | null;
   parameters?: EstimationParameters | null;
   included_role_ids?: string[] | null;
   role_allocation_overrides?: Record<string, number> | null;
@@ -88,10 +89,14 @@ export interface SendMessageResponseDTO {
   estimateId?: string;
 }
 
-export function sendMessage(conversationId: string, text: string) {
+/** `signal`: para poder cancelar la espera desde la UI (spec pedido por usuario) — cancela el
+ * fetch en el navegador; el agente puede seguir procesando del lado del servidor, ver botón
+ * "Cancelar" en estimate/new/page.tsx. */
+export function sendMessage(conversationId: string, text: string, signal?: AbortSignal) {
   return apiFetch<SendMessageResponseDTO>(`/conversations/${conversationId}/messages`, {
     method: "POST",
     body: JSON.stringify({ text }),
+    signal,
   });
 }
 
