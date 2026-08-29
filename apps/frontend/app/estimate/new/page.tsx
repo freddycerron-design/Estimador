@@ -303,7 +303,7 @@ function ChatUI() {
             <p className="mb-4 text-sm text-slate-500">
               {refineFromId
                 ? "Estos son los parámetros usados en la estimación anterior. Ajusta lo que necesites y continúa el ciclo."
-                : "Marca los que quieras personalizar solo para esta estimación, con el valor que quieras usar. Si no marcas ninguno, se usa la configuración estándar del sistema, sin cambios."}
+                : "Para la estimación, solo los valores de Contingencia por defecto y Overhead por defecto son editables, los otros valores son obligatorios."}
             </p>
             {paramsLoading ? (
               <p className="text-sm text-slate-400">Cargando parámetros…</p>
