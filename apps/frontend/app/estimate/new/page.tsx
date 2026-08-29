@@ -345,6 +345,12 @@ function ChatUI() {
                             estimación. Es la reserva por si algo sale distinto a lo planeado, no un costo operativo fijo.
                           </span>
                         )}
+                        {key === "DEFAULT_OVERHEAD_PCT" && (
+                          <span className="flex-1 text-xs text-slate-500">
+                            Overhead (10% por defecto): Costos indirectos de operar el proyecto — gestión, coordinación, tiempo no facturable,
+                            herramientas — todo lo que rodea la ejecución pero no es horas de trabajo directo sobre el entregable.
+                          </span>
+                        )}
                       </div>
                     );
                   })}
