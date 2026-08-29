@@ -26,7 +26,7 @@ export default function LoginPage() {
       setError(result);
       return;
     }
-    router.push("/estimate/new");
+    router.push("/");
   }
 
   return (
