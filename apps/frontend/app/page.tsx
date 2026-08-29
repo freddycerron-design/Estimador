@@ -55,8 +55,8 @@ export default function HomePage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {CARDS.map(({ href, icon: Icon, title, description }) => (
             <Link key={href} href={href} className={`${card} p-5 transition-shadow hover:shadow-md dark:hover:shadow-black/20`}>
-              <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-accent-100 dark:bg-accent-500/20">
-                <Icon className="h-5 w-5 text-accent-600 dark:text-accent-400" strokeWidth={2} />
+              <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-accent-100 dark:bg-azure-500/20">
+                <Icon className="h-5 w-5 text-accent-600 dark:text-azure-400" strokeWidth={2} />
               </div>
               <h2 className="mb-1 font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">{description}</p>

@@ -15,10 +15,11 @@ export interface ProvenanceMeta {
 }
 
 // Los `dot`/`text` llevan su propia variante `dark:` embebida (modo oscuro adicional al claro,
-// spec pedido por usuario) — CALCULATED es el único caso que necesita cambiar de familia de color
-// en oscuro: navy-600/700 está pensado para leerse sobre blanco y casi desaparece sobre el fondo
-// navy oscuro de la app; el resto (colores saturados por defecto de Tailwind + accent) ya leen
-// bien en ambos fondos, solo se aclara el tono de texto para mantener contraste sobre oscuro.
+// spec pedido por usuario). Dos casos cambian de familia de color en oscuro, no solo de tono:
+// CALCULATED (navy-600/700 está pensado para leerse sobre blanco y casi desaparece sobre el fondo
+// navy oscuro de la app) e INFERRED (el violeta de `accent` se perdía en oscuro — pasa a `azure`,
+// un azul pensado para contrastar sobre navy; ver tailwind.config.ts). El resto (colores saturados
+// por defecto de Tailwind) ya lee bien en ambos fondos, solo se aclara el tono de texto.
 export const PROVENANCE_META: Record<Provenance, ProvenanceMeta> = {
   FACTUAL: {
     label: "Factual",
@@ -35,8 +36,8 @@ export const PROVENANCE_META: Record<Provenance, ProvenanceMeta> = {
   INFERRED: {
     label: "Inferido",
     hint: "El agente lo dedujo de patrones — no viene de un dato exacto.",
-    dot: "bg-accent-500",
-    text: "text-accent-700 dark:text-accent-200",
+    dot: "bg-accent-500 dark:bg-azure-500",
+    text: "text-accent-700 dark:text-azure-300",
   },
   ASSUMPTION: {
     label: "Supuesto",

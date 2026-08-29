@@ -492,8 +492,8 @@ function ChatUI() {
             {loadingHistory && messages.length === 0 && <p className="text-sm text-slate-400 dark:text-slate-500">Cargando conversación…</p>}
             {!loadingHistory && messages.length === 0 && !requirementContext && (
               <div className="flex h-full flex-col items-center justify-center text-center">
-                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-500/20">
-                  <Sparkles className="h-6 w-6 text-accent-600 dark:text-accent-400" strokeWidth={2} />
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-100 dark:bg-azure-500/20">
+                  <Sparkles className="h-6 w-6 text-accent-600 dark:text-azure-400" strokeWidth={2} />
                 </div>
                 <p className="max-w-sm text-sm text-slate-400 dark:text-slate-500">
                   Describe el requerimiento del proyecto (mientras más detalle, mejor referencia histórica encontraré). Ejemplo:
@@ -503,10 +503,10 @@ function ChatUI() {
               </div>
             )}
             {requirementContext && (
-              <div className="rounded-xl border border-accent-200 bg-accent-50/70 p-4 shadow-sm dark:border-accent-500/30 dark:bg-accent-500/10">
+              <div className="rounded-xl border border-accent-200 bg-accent-50/70 p-4 shadow-sm dark:border-azure-500/30 dark:bg-azure-500/10">
                 <div className="mb-2 flex items-center gap-2">
-                  <FileText className="h-4 w-4 shrink-0 text-accent-600 dark:text-accent-400" strokeWidth={2} />
-                  <span className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-300">
+                  <FileText className="h-4 w-4 shrink-0 text-accent-600 dark:text-azure-400" strokeWidth={2} />
+                  <span className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-azure-300">
                     Información considerada para esta estimación
                   </span>
                 </div>
@@ -560,7 +560,7 @@ function ChatUI() {
             {sending && (
               <div className="flex justify-start">
                 <div className="flex items-center gap-2.5 rounded-2xl rounded-tl-sm bg-white px-4 py-3 text-sm text-slate-500 shadow-sm dark:bg-navy-800 dark:text-slate-400">
-                  <Loader2 className="h-4 w-4 shrink-0 animate-spin text-accent-500" strokeWidth={2.5} />
+                  <Loader2 className="h-4 w-4 shrink-0 animate-spin text-accent-500 dark:text-azure-400" strokeWidth={2.5} />
                   Analizando… esto puede tardar hasta un minuto (busca referencias, estima, calcula costos).
                   <button
                     onClick={handleCancel}

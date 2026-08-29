@@ -19,8 +19,9 @@ export const card = "rounded-xl border border-slate-200 bg-white shadow-sm dark:
 export const cardPadded = "rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-800";
 
 export const badge = "inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:bg-navy-700 dark:text-slate-300";
+// En oscuro usa `azure` (azul) en vez de `accent` (violeta) — ver comentario en tailwind.config.ts.
 export const badgeAccent =
-  "inline-flex items-center rounded-full bg-accent-100 px-2.5 py-0.5 text-xs font-medium text-accent-700 dark:bg-accent-500/20 dark:text-accent-300";
+  "inline-flex items-center rounded-full bg-accent-100 px-2.5 py-0.5 text-xs font-medium text-accent-700 dark:bg-azure-500/20 dark:text-azure-300";
 export const badgeBrand =
   "inline-flex items-center rounded-full bg-brand-100 px-2.5 py-0.5 text-xs font-medium text-brand-700 dark:bg-brand-500/20 dark:text-brand-300";
 

@@ -178,7 +178,7 @@ function EstimateDetail() {
 
       <div className={cardPadded}>
         <h2 className="mb-3 flex items-center gap-1.5 font-semibold text-slate-900 dark:text-slate-100">
-          <Star className="h-4 w-4 text-accent-500" strokeWidth={2} />
+          <Star className="h-4 w-4 text-accent-500 dark:text-azure-400" strokeWidth={2} />
           Feedback
         </h2>
         {feedbackSent ? (

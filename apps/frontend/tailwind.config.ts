@@ -37,6 +37,21 @@ const config: Config = {
           600: "#7C3AED",
           700: "#6D28D9",
         },
+        // Variante de "accent" para modo oscuro (spec pedido por usuario: "el color morado se
+        // pierde [en oscuro], cambia a un azul"). El violeta de `accent` está pensado para leerse
+        // sobre fondos claros; además varios usos referenciaban accent-300/400, que nunca
+        // existieron en esta paleta, así que en oscuro esos textos ni siquiera tomaban color
+        // propio. `azure` es un azul saturado y luminoso pensado específicamente para contrastar
+        // sobre el navy oscuro de la app (mismo rol que `accent`: insignias/iconos de "IA").
+        azure: {
+          100: "#E0EEFF",
+          200: "#BFDFFF",
+          300: "#8AC4FF",
+          400: "#56A8FF",
+          500: "#2E8BFF",
+          600: "#1868DB",
+          700: "#124FAA",
+        },
         navy: {
           600: "#374361",
           700: "#2B3550",

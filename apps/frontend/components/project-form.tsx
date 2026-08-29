@@ -85,7 +85,7 @@ export function ProjectForm({
   const label = labelClass;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 rounded-xl border border-accent-200 bg-accent-50/40 p-4 dark:border-accent-500/30 dark:bg-accent-500/10">
+    <form onSubmit={handleSubmit} className="space-y-3 rounded-xl border border-accent-200 bg-accent-50/40 p-4 dark:border-azure-500/30 dark:bg-azure-500/10">
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <label className={label}>Nombre *</label>

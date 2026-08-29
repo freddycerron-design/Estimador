@@ -53,7 +53,7 @@ function ImportSection({ onImported }: { onImported: () => void }) {
   return (
     <div className={`${cardPadded} mb-6`}>
       <div className="mb-3 flex items-center gap-2">
-        <FileUp className="h-4 w-4 text-accent-600 dark:text-accent-400" strokeWidth={2} />
+        <FileUp className="h-4 w-4 text-accent-600 dark:text-azure-400" strokeWidth={2} />
         <h2 className="font-semibold text-slate-900 dark:text-slate-100">Carga masiva de requerimientos (Excel/CSV)</h2>
       </div>
       <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">Cada fila se procesa de forma independiente — un error en una fila no bloquea el resto.</p>

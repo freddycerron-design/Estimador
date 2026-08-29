@@ -142,7 +142,7 @@ export function RequirementForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 rounded-xl border border-accent-200 bg-accent-50/40 p-4 dark:border-accent-500/30 dark:bg-accent-500/10">
+    <form onSubmit={handleSubmit} className="space-y-3 rounded-xl border border-accent-200 bg-accent-50/40 p-4 dark:border-azure-500/30 dark:bg-azure-500/10">
       <div>
         <label className={labelClass}>Título *</label>
         <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} required />
@@ -195,7 +195,7 @@ export function RequirementForm({
         </div>
       </div>
 
-      <div className="border-t border-accent-200 pt-3 dark:border-accent-500/30">
+      <div className="border-t border-accent-200 pt-3 dark:border-azure-500/30">
         <label className={labelClass}>Archivos con más detalle del requerimiento</label>
         <p className="mb-2 text-xs text-slate-500 dark:text-slate-400">
           Se leen automáticamente y su contenido se incluye al iniciar la estimación de este requerimiento. Formatos soportados: PDF, Word
@@ -234,13 +234,13 @@ export function RequirementForm({
             {pendingFiles.map((f, i) => (
               <li
                 key={i}
-                className="flex items-center gap-2 rounded-lg border border-dashed border-accent-300 bg-white px-3 py-1.5 text-sm dark:border-accent-500/40 dark:bg-navy-800"
+                className="flex items-center gap-2 rounded-lg border border-dashed border-accent-300 bg-white px-3 py-1.5 text-sm dark:border-azure-500/40 dark:bg-navy-800"
               >
-                <Paperclip className="h-4 w-4 shrink-0 text-accent-500" strokeWidth={2} />
+                <Paperclip className="h-4 w-4 shrink-0 text-accent-500 dark:text-azure-400" strokeWidth={2} />
                 <span className="flex-1 truncate text-slate-700 dark:text-slate-200">{f.name}</span>
                 <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">{formatSize(f.size)}</span>
                 {uploadingIndex === i ? (
-                  <span className="shrink-0 text-xs text-accent-600 dark:text-accent-400">Subiendo…</span>
+                  <span className="shrink-0 text-xs text-accent-600 dark:text-azure-400">Subiendo…</span>
                 ) : (
                   <button
                     type="button"
