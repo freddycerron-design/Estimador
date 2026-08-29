@@ -34,9 +34,9 @@ const STATUS_LABELS: Record<RequirementAttachmentDTO["extraction_status"], strin
   error: "No se pudo leer",
 };
 const STATUS_STYLES: Record<RequirementAttachmentDTO["extraction_status"], string> = {
-  ok: "bg-emerald-100 text-emerald-700",
-  unsupported: "bg-slate-100 text-slate-500",
-  error: "bg-red-100 text-red-700",
+  ok: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+  unsupported: "bg-slate-100 text-slate-500 dark:bg-navy-700 dark:text-slate-400",
+  error: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300",
 };
 
 export function RequirementForm({
@@ -142,7 +142,7 @@ export function RequirementForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 rounded-xl border border-accent-200 bg-accent-50/40 p-4">
+    <form onSubmit={handleSubmit} className="space-y-3 rounded-xl border border-accent-200 bg-accent-50/40 p-4 dark:border-accent-500/30 dark:bg-accent-500/10">
       <div>
         <label className={labelClass}>Título *</label>
         <input value={title} onChange={(e) => setTitle(e.target.value)} className={inputClass} required />
@@ -195,9 +195,9 @@ export function RequirementForm({
         </div>
       </div>
 
-      <div className="border-t border-accent-200 pt-3">
+      <div className="border-t border-accent-200 pt-3 dark:border-accent-500/30">
         <label className={labelClass}>Archivos con más detalle del requerimiento</label>
-        <p className="mb-2 text-xs text-slate-500">
+        <p className="mb-2 text-xs text-slate-500 dark:text-slate-400">
           Se leen automáticamente y su contenido se incluye al iniciar la estimación de este requerimiento. Formatos soportados: PDF, Word
           (.docx), PowerPoint (.pptx), Excel (.xlsx/.xls), texto plano (.txt/.md/.csv).
         </p>
@@ -205,10 +205,13 @@ export function RequirementForm({
         {existingAttachments.length > 0 && (
           <ul className="mb-2 space-y-1.5">
             {existingAttachments.map((a) => (
-              <li key={a.id} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm">
-                <FileText className="h-4 w-4 shrink-0 text-slate-400" strokeWidth={2} />
-                <span className="flex-1 truncate text-slate-700">{a.filename}</span>
-                <span className="shrink-0 text-xs text-slate-400">{formatSize(a.size_bytes)}</span>
+              <li
+                key={a.id}
+                className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm dark:border-navy-600 dark:bg-navy-800"
+              >
+                <FileText className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" strokeWidth={2} />
+                <span className="flex-1 truncate text-slate-700 dark:text-slate-200">{a.filename}</span>
+                <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">{formatSize(a.size_bytes)}</span>
                 <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[a.extraction_status]}`} title={a.extraction_note ?? undefined}>
                   {STATUS_LABELS[a.extraction_status]}
                 </span>
@@ -216,7 +219,7 @@ export function RequirementForm({
                   type="button"
                   onClick={() => removeExistingAttachment(a.id)}
                   disabled={deletingId === a.id}
-                  className="shrink-0 text-slate-400 hover:text-red-600 disabled:opacity-50"
+                  className="shrink-0 text-slate-400 hover:text-red-600 disabled:opacity-50 dark:text-slate-500 dark:hover:text-red-400"
                   title="Eliminar adjunto"
                 >
                   <X className="h-4 w-4" strokeWidth={2} />
@@ -229,14 +232,22 @@ export function RequirementForm({
         {pendingFiles.length > 0 && (
           <ul className="mb-2 space-y-1.5">
             {pendingFiles.map((f, i) => (
-              <li key={i} className="flex items-center gap-2 rounded-lg border border-dashed border-accent-300 bg-white px-3 py-1.5 text-sm">
+              <li
+                key={i}
+                className="flex items-center gap-2 rounded-lg border border-dashed border-accent-300 bg-white px-3 py-1.5 text-sm dark:border-accent-500/40 dark:bg-navy-800"
+              >
                 <Paperclip className="h-4 w-4 shrink-0 text-accent-500" strokeWidth={2} />
-                <span className="flex-1 truncate text-slate-700">{f.name}</span>
-                <span className="shrink-0 text-xs text-slate-400">{formatSize(f.size)}</span>
+                <span className="flex-1 truncate text-slate-700 dark:text-slate-200">{f.name}</span>
+                <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">{formatSize(f.size)}</span>
                 {uploadingIndex === i ? (
-                  <span className="shrink-0 text-xs text-accent-600">Subiendo…</span>
+                  <span className="shrink-0 text-xs text-accent-600 dark:text-accent-400">Subiendo…</span>
                 ) : (
-                  <button type="button" onClick={() => removePendingFile(i)} className="shrink-0 text-slate-400 hover:text-red-600" title="Quitar">
+                  <button
+                    type="button"
+                    onClick={() => removePendingFile(i)}
+                    className="shrink-0 text-slate-400 hover:text-red-600 dark:text-slate-500 dark:hover:text-red-400"
+                    title="Quitar"
+                  >
                     <X className="h-4 w-4" strokeWidth={2} />
                   </button>
                 )}
@@ -251,14 +262,14 @@ export function RequirementForm({
           <input type="file" multiple accept={ACCEPTED_EXTENSIONS} onChange={(e) => addFiles(e.target.files)} className="hidden" />
         </label>
         {!initial && pendingFiles.length > 0 && (
-          <p className="mt-1.5 flex items-center gap-1 text-xs text-slate-400">
+          <p className="mt-1.5 flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
             <AlertTriangle className="h-3 w-3" strokeWidth={2} />
             Se subirán al guardar el requerimiento.
           </p>
         )}
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       <div className="flex gap-2 pt-1">
         <button type="submit" disabled={submitting} className={btnPrimary}>
           {submitting ? "Guardando…" : submitLabel}

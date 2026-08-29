@@ -8,12 +8,12 @@ import { btnPrimary, btnSecondary, cardPadded } from "@/lib/ui-classes";
 import { listProposals, runLearningCycle, approveProposal, activateProposal, type LearningProposalDTO } from "@/lib/api-client";
 
 const STATUS_STYLES: Record<string, string> = {
-  DRAFT: "bg-slate-100 text-slate-600",
-  EVALUATION: "bg-blue-100 text-blue-700",
-  PENDING_APPROVAL: "bg-amber-100 text-amber-700",
-  APPROVED: "bg-emerald-100 text-emerald-700",
+  DRAFT: "bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-300",
+  EVALUATION: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
+  PENDING_APPROVAL: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
+  APPROVED: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
   ACTIVE: "bg-brand-500 text-white",
-  REJECTED: "bg-red-100 text-red-700",
+  REJECTED: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300",
 };
 
 function ProposalCard({ proposal, onChange }: { proposal: LearningProposalDTO; onChange: () => void }) {
@@ -42,13 +42,15 @@ function ProposalCard({ proposal, onChange }: { proposal: LearningProposalDTO; o
   return (
     <div className={cardPadded}>
       <div className="mb-2 flex items-start justify-between gap-3">
-        <h3 className="font-semibold text-slate-900">{proposal.title}</h3>
-        <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[proposal.status] ?? "bg-slate-100"}`}>{proposal.status}</span>
+        <h3 className="font-semibold text-slate-900 dark:text-slate-100">{proposal.title}</h3>
+        <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[proposal.status] ?? "bg-slate-100 dark:bg-navy-700"}`}>
+          {proposal.status}
+        </span>
       </div>
-      {proposal.description && <p className="mb-2 text-sm text-slate-600">{proposal.description}</p>}
-      {proposal.rationale && <p className="mb-2 text-sm italic text-slate-500">&ldquo;{proposal.rationale}&rdquo;</p>}
+      {proposal.description && <p className="mb-2 text-sm text-slate-600 dark:text-slate-300">{proposal.description}</p>}
+      {proposal.rationale && <p className="mb-2 text-sm italic text-slate-500 dark:text-slate-400">&ldquo;{proposal.rationale}&rdquo;</p>}
       {summary && (
-        <p className="mb-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
+        <p className="mb-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:bg-navy-900/40 dark:text-slate-400">
           Evaluación: {summary.casesRun} caso(s) · error base {summary.baselineAvgErrorPct}% → error ajustado {summary.adjustedAvgErrorPct}% (
           {summary.improvementPct >= 0 ? "+" : ""}
           {summary.improvementPct}pp de mejora) — {summary.passed ? "respaldado por evidencia" : "sin evidencia suficiente"}
@@ -108,7 +110,9 @@ function ProposalsList() {
         {proposals.map((p) => (
           <ProposalCard key={p.id} proposal={p} onChange={reload} />
         ))}
-        {proposals.length === 0 && <p className="text-sm text-slate-400">Sin propuestas todavía. Corre el ciclo de aprendizaje para generar.</p>}
+        {proposals.length === 0 && (
+          <p className="text-sm text-slate-400 dark:text-slate-500">Sin propuestas todavía. Corre el ciclo de aprendizaje para generar.</p>
+        )}
       </div>
     </div>
   );

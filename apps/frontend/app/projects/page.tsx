@@ -27,9 +27,9 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  historical_reference: "bg-slate-100 text-slate-600",
-  active_estimate: "bg-amber-100 text-amber-700",
-  completed: "bg-emerald-100 text-emerald-700",
+  historical_reference: "bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-300",
+  active_estimate: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
+  completed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
 };
 
 function ActualsForm({ projectId, onDone }: { projectId: string; onDone: () => void }) {
@@ -58,14 +58,14 @@ function ActualsForm({ projectId, onDone }: { projectId: string; onDone: () => v
 
   if (result) {
     return (
-      <p className="mt-2 text-xs font-medium text-emerald-700">
+      <p className="mt-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
         Registrado. Variance vs. estimación: duración {result.durationVariancePct ?? "—"}%, costo {result.costVariancePct ?? "—"}%.
       </p>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-3 flex flex-wrap items-end gap-2 rounded-lg bg-slate-50 p-3 text-xs">
+    <form onSubmit={handleSubmit} className="mt-3 flex flex-wrap items-end gap-2 rounded-lg bg-slate-50 p-3 text-xs dark:bg-navy-900/40">
       <div>
         <label className={label}>Duración real (semanas)</label>
         <input value={durationWeeks} onChange={(e) => setDurationWeeks(e.target.value)} className={`${input} w-24`} />
@@ -112,10 +112,10 @@ function ImportSection({ onImported }: { onImported: () => void }) {
   return (
     <div className={`${cardPadded} mb-6`}>
       <div className="mb-3 flex items-center gap-2">
-        <FileUp className="h-4 w-4 text-accent-600" strokeWidth={2} />
-        <h2 className="font-semibold text-slate-900">Importar proyectos históricos (Excel/CSV)</h2>
+        <FileUp className="h-4 w-4 text-accent-600 dark:text-accent-400" strokeWidth={2} />
+        <h2 className="font-semibold text-slate-900 dark:text-slate-100">Importar proyectos históricos (Excel/CSV)</h2>
       </div>
-      <p className="mb-3 text-sm text-slate-500">
+      <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
         Carga un archivo .csv o .xlsx con proyectos históricos. Cada fila se procesa de forma independiente — un error en una fila no
         bloquea el resto.
       </p>
@@ -130,14 +130,14 @@ function ImportSection({ onImported }: { onImported: () => void }) {
           <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" onChange={handleFileChange} disabled={importing} className="hidden" />
         </label>
       </div>
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
       {result && (
         <div className="mt-3 text-sm">
-          <p className="font-medium text-emerald-700">
+          <p className="font-medium text-emerald-700 dark:text-emerald-400">
             {result.imported} de {result.totalRows} fila(s) importadas correctamente{result.skipped > 0 ? `, ${result.skipped} con errores` : ""}.
           </p>
           {result.skipped > 0 && (
-            <ul className="mt-1 list-disc pl-5 text-xs text-red-600">
+            <ul className="mt-1 list-disc pl-5 text-xs text-red-600 dark:text-red-400">
               {result.results
                 .filter((r) => r.status === "skipped")
                 .map((r, i) => (
@@ -216,7 +216,7 @@ function ProjectsList() {
         </div>
       )}
 
-      {deleteError && <p className="mb-3 text-sm text-red-600">{deleteError}</p>}
+      {deleteError && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{deleteError}</p>}
 
       <div className="space-y-2">
         {projects.map((p) => (
@@ -237,12 +237,16 @@ function ProjectsList() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2">
-                      <p className="font-medium text-slate-900">{p.name}</p>
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[p.status] ?? "bg-slate-100 text-slate-600"}`}>
+                      <p className="font-medium text-slate-900 dark:text-slate-100">{p.name}</p>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          STATUS_STYLES[p.status] ?? "bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-300"
+                        }`}
+                      >
                         {STATUS_LABELS[p.status] ?? p.status}
                       </span>
                     </div>
-                    <p className="mt-0.5 text-xs text-slate-500">
+                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                       {p.project_type}
                       {p.duration_weeks && ` · ${p.duration_weeks} semanas`}
                       {p.actual_cost && ` · $${Number(p.actual_cost).toLocaleString()}`}
@@ -270,7 +274,7 @@ function ProjectsList() {
             )}
           </div>
         ))}
-        {projects.length === 0 && <p className="text-sm text-slate-400">Sin proyectos aún.</p>}
+        {projects.length === 0 && <p className="text-sm text-slate-400 dark:text-slate-500">Sin proyectos aún.</p>}
       </div>
     </div>
   );

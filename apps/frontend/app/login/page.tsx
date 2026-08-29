@@ -33,8 +33,10 @@ export default function LoginPage() {
     <div className="mx-auto max-w-sm py-16">
       <div className="mb-6 flex flex-col items-center text-center">
         <Image src="/brand/estimadora-logo.jpg" alt="EstimaDORA IA" width={160} height={160} className="mb-3 h-28 w-28 rounded-2xl object-contain" priority />
-        <h1 className="font-display text-xl font-semibold tracking-tight text-slate-900">{mode === "signin" ? "Iniciar sesión" : "Crear cuenta"}</h1>
-        <p className="mt-1 text-sm text-slate-500">Tu asistente inteligente para estimar proyectos de TI.</p>
+        <h1 className="font-display text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+          {mode === "signin" ? "Iniciar sesión" : "Crear cuenta"}
+        </h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Tu asistente inteligente para estimar proyectos de TI.</p>
       </div>
       <div className={`${card} p-6`}>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -52,13 +54,16 @@ export default function LoginPage() {
             <label className={label}>Contraseña</label>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className={input} minLength={6} required />
           </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
           <button type="submit" disabled={submitting} className={`${btnPrimary} w-full justify-center`}>
             {submitting ? "…" : mode === "signin" ? "Entrar" : "Crear cuenta"}
           </button>
         </form>
       </div>
-      <button onClick={() => setMode(mode === "signin" ? "signup" : "signin")} className="mt-4 w-full text-center text-sm text-brand-600 hover:underline">
+      <button
+        onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+        className="mt-4 w-full text-center text-sm text-brand-600 hover:underline dark:text-brand-400"
+      >
         {mode === "signin" ? "¿No tienes cuenta? Crear una" : "¿Ya tienes cuenta? Inicia sesión"}
       </button>
     </div>

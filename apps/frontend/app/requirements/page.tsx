@@ -21,9 +21,9 @@ import {
 
 const STATUS_LABELS: Record<string, string> = { new: "Nuevo", in_estimation: "En estimación", estimated: "Estimado" };
 const STATUS_STYLES: Record<string, string> = {
-  new: "bg-slate-100 text-slate-600",
-  in_estimation: "bg-amber-100 text-amber-700",
-  estimated: "bg-emerald-100 text-emerald-700",
+  new: "bg-slate-100 text-slate-600 dark:bg-navy-700 dark:text-slate-300",
+  in_estimation: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
+  estimated: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
 };
 
 function ImportSection({ onImported }: { onImported: () => void }) {
@@ -53,10 +53,10 @@ function ImportSection({ onImported }: { onImported: () => void }) {
   return (
     <div className={`${cardPadded} mb-6`}>
       <div className="mb-3 flex items-center gap-2">
-        <FileUp className="h-4 w-4 text-accent-600" strokeWidth={2} />
-        <h2 className="font-semibold text-slate-900">Carga masiva de requerimientos (Excel/CSV)</h2>
+        <FileUp className="h-4 w-4 text-accent-600 dark:text-accent-400" strokeWidth={2} />
+        <h2 className="font-semibold text-slate-900 dark:text-slate-100">Carga masiva de requerimientos (Excel/CSV)</h2>
       </div>
-      <p className="mb-3 text-sm text-slate-500">Cada fila se procesa de forma independiente — un error en una fila no bloquea el resto.</p>
+      <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">Cada fila se procesa de forma independiente — un error en una fila no bloquea el resto.</p>
       <div className="flex flex-wrap items-center gap-3">
         <button onClick={() => downloadRequirementsImportTemplate()} className={btnSecondary}>
           <Download className="h-3.5 w-3.5" strokeWidth={2} />
@@ -68,14 +68,14 @@ function ImportSection({ onImported }: { onImported: () => void }) {
           <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" onChange={handleFileChange} disabled={importing} className="hidden" />
         </label>
       </div>
-      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>}
       {result && (
         <div className="mt-3 text-sm">
-          <p className="font-medium text-emerald-700">
+          <p className="font-medium text-emerald-700 dark:text-emerald-400">
             {result.imported} de {result.totalRows} fila(s) importadas correctamente{result.skipped > 0 ? `, ${result.skipped} con errores` : ""}.
           </p>
           {result.skipped > 0 && (
-            <ul className="mt-1 list-disc pl-5 text-xs text-red-600">
+            <ul className="mt-1 list-disc pl-5 text-xs text-red-600 dark:text-red-400">
               {result.results
                 .filter((r) => r.status === "skipped")
                 .map((r, i) => (
@@ -161,7 +161,7 @@ function RequirementsList() {
 
       <form onSubmit={handleSearch} className="mb-4 flex gap-2">
         <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" strokeWidth={2} />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" strokeWidth={2} />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -188,11 +188,11 @@ function RequirementsList() {
         </div>
       )}
 
-      {deleteError && <p className="mb-3 text-sm text-red-600">{deleteError}</p>}
+      {deleteError && <p className="mb-3 text-sm text-red-600 dark:text-red-400">{deleteError}</p>}
 
       <div className="space-y-2">
         {requirements.map((r) => (
-          <div key={r.id} className={`${card} p-4 ${selectedId === r.id ? "border-brand-400 ring-1 ring-brand-300" : ""}`}>
+          <div key={r.id} className={`${card} p-4 ${selectedId === r.id ? "border-brand-400 ring-1 ring-brand-300 dark:border-brand-500 dark:ring-brand-500/40" : ""}`}>
             {editingId === r.id && editingData ? (
               <RequirementForm
                 initial={editingData}
@@ -217,12 +217,12 @@ function RequirementsList() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <span className={badge}>REQ-{r.number}</span>
-                    <p className="font-medium text-slate-900">{r.title}</p>
+                    <p className="font-medium text-slate-900 dark:text-slate-100">{r.title}</p>
                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[r.status]}`}>{STATUS_LABELS[r.status]}</span>
                   </div>
-                  <p className="mt-1 line-clamp-2 text-sm text-slate-500">{r.description}</p>
+                  <p className="mt-1 line-clamp-2 text-sm text-slate-500 dark:text-slate-400">{r.description}</p>
                   {r.status === "estimated" && r.estimate_id && (
-                    <a href={`/estimate/${r.estimate_id}`} className="mt-1 inline-block text-xs font-medium text-brand-600 hover:underline">
+                    <a href={`/estimate/${r.estimate_id}`} className="mt-1 inline-block text-xs font-medium text-brand-600 hover:underline dark:text-brand-400">
                       Ver estimación →
                     </a>
                   )}
@@ -239,7 +239,7 @@ function RequirementsList() {
             )}
           </div>
         ))}
-        {requirements.length === 0 && <p className="text-sm text-slate-400">Sin requerimientos aún.</p>}
+        {requirements.length === 0 && <p className="text-sm text-slate-400 dark:text-slate-500">Sin requerimientos aún.</p>}
       </div>
     </div>
   );

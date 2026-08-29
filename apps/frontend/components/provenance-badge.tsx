@@ -14,8 +14,8 @@ export function ProvenanceBadge({ value }: { value: string }) {
 /** Leyenda fija de los 5 valores posibles — se muestra una vez cerca de donde aparecen los badges. */
 export function ProvenanceLegend() {
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-500">
-      <span className="font-medium text-slate-400">Procedencia:</span>
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-500 dark:text-slate-400">
+      <span className="font-medium text-slate-400 dark:text-slate-500">Procedencia:</span>
       {Object.entries(PROVENANCE_META).map(([key, meta]) => (
         <span key={key} className="inline-flex items-center gap-1.5" title={meta.hint}>
           <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${meta.dot}`} />

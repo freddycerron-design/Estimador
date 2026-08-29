@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { FileText, FolderKanban, Brain, LogOut, ClipboardList, Settings } from "lucide-react";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { getMe } from "@/lib/api-client";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const NAV_LINKS = [
   { href: "/requirements", label: "Requerimientos", icon: ClipboardList },
@@ -59,6 +60,7 @@ function NavBar() {
               );
             })}
             <div className="ml-3 flex items-center gap-2 border-l border-white/20 pl-3">
+              <ThemeToggle />
               <span className="hidden text-xs text-white/60 sm:inline">{user.email}</span>
               <button onClick={() => signOut()} className="rounded-full p-1.5 text-white/60 hover:bg-white/10 hover:text-white" title="Cerrar sesión">
                 <LogOut className="h-4 w-4" strokeWidth={2} />

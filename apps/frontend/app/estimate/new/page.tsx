@@ -363,7 +363,7 @@ function ChatUI() {
         subtitle="Conversa con el agente — busca evidencia real antes de darte un número."
         actions={
           conversationId && (
-            <button onClick={startNewConversation} className="flex items-center gap-1 text-sm text-slate-500 hover:text-brand-600">
+            <button onClick={startNewConversation} className="flex items-center gap-1 text-sm text-slate-500 hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-400">
               <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
               Empezar otra conversación
             </button>
@@ -375,16 +375,16 @@ function ChatUI() {
         <div className="flex-1 space-y-4 overflow-y-auto">
           <div className={cardPadded}>
             <div className="mb-1 flex items-center gap-2">
-              <SlidersHorizontal className="h-4 w-4 text-brand-600" strokeWidth={2} />
-              <h2 className="font-semibold text-slate-900">Parámetros de esta estimación</h2>
+              <SlidersHorizontal className="h-4 w-4 text-brand-600 dark:text-brand-400" strokeWidth={2} />
+              <h2 className="font-semibold text-slate-900 dark:text-slate-100">Parámetros de esta estimación</h2>
             </div>
-            <p className="mb-4 text-sm text-slate-500">
+            <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
               {refineFromId
                 ? "Estos son los parámetros usados en la estimación anterior. Ajusta lo que necesites y continúa el ciclo."
                 : "Para la estimación, solo los valores de Contingencia por defecto y Overhead por defecto son editables, los otros valores son obligatorios."}
             </p>
             {paramsLoading ? (
-              <p className="text-sm text-slate-400">Cargando parámetros…</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500">Cargando parámetros…</p>
             ) : (
               <>
                 <div className="space-y-3">
@@ -403,9 +403,9 @@ function ChatUI() {
                           // como antes — precarga lo que quedó la vez anterior, ajustable.
                           disabled={!refineFromId}
                           onChange={refineFromId ? (e) => updateParam(key, { included: e.target.checked }) : undefined}
-                          className="h-4 w-4 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-400 disabled:cursor-not-allowed disabled:opacity-70"
+                          className="h-4 w-4 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-400 disabled:cursor-not-allowed disabled:opacity-70 dark:border-navy-600 dark:bg-navy-800"
                         />
-                        <label className="w-80 shrink-0 text-sm text-slate-600">{ESTIMATION_PARAMETER_LABELS[key]}</label>
+                        <label className="w-80 shrink-0 text-sm text-slate-600 dark:text-slate-300">{ESTIMATION_PARAMETER_LABELS[key]}</label>
                         <div className="relative">
                           <input
                             type="number"
@@ -413,18 +413,20 @@ function ChatUI() {
                             value={isPercent ? paramForm[key].value * 100 : paramForm[key].value}
                             disabled={!paramForm[key].included || !isValueEditable}
                             onChange={(e) => updateParam(key, { value: isPercent ? Number(e.target.value) / 100 : Number(e.target.value) })}
-                            className={`${inputClass} max-w-[140px] disabled:bg-slate-50 disabled:text-slate-400 ${isPercent ? "pr-7" : ""}`}
+                            className={`${inputClass} max-w-[140px] disabled:bg-slate-50 disabled:text-slate-400 dark:disabled:bg-navy-900/60 dark:disabled:text-slate-500 ${isPercent ? "pr-7" : ""}`}
                           />
-                          {isPercent && <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-slate-400">%</span>}
+                          {isPercent && (
+                            <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-500">%</span>
+                          )}
                         </div>
                         {key === "DEFAULT_CONTINGENCY_PCT" && (
-                          <span className="flex-1 text-xs text-slate-500">
+                          <span className="flex-1 text-xs text-slate-500 dark:text-slate-400">
                             Contingencia (15% por defecto): Es un colchón de riesgo — margen para imprevistos, cambios de alcance, o error de
                             estimación. Es la reserva por si algo sale distinto a lo planeado, no un costo operativo fijo.
                           </span>
                         )}
                         {key === "DEFAULT_OVERHEAD_PCT" && (
-                          <span className="flex-1 text-xs text-slate-500">
+                          <span className="flex-1 text-xs text-slate-500 dark:text-slate-400">
                             Overhead (10% por defecto): Costos indirectos de operar el proyecto — gestión, coordinación, tiempo no facturable,
                             herramientas — todo lo que rodea la ejecución pero no es horas de trabajo directo sobre el entregable.
                           </span>
@@ -434,21 +436,21 @@ function ChatUI() {
                   })}
                 </div>
 
-                <div className="mt-5 border-t border-slate-100 pt-4">
-                  <h3 className="mb-1 text-sm font-medium text-slate-700">Roles a incluir en el desglose</h3>
-                  <p className="mb-3 text-xs text-slate-400">
+                <div className="mt-5 border-t border-slate-100 pt-4 dark:border-navy-700">
+                  <h3 className="mb-1 text-sm font-medium text-slate-700 dark:text-slate-300">Roles a incluir en el desglose</h3>
+                  <p className="mb-3 text-xs text-slate-400 dark:text-slate-500">
                     Desmarca los roles que no quieras que aparezcan en el esfuerzo por fase y rol de esta estimación. Si no desmarcas ninguno, se
                     incluyen todos (comportamiento estándar). El % junto a cada rol es su asignación al proyecto — no siempre es 100%, se considera
                     en el cálculo de tiempo y costo, y puedes editarlo solo para esta estimación.
                   </p>
                   <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     {roles.map((role) => (
-                      <div key={role.id} className="flex items-center gap-2 text-sm text-slate-600">
+                      <div key={role.id} className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                         <input
                           type="checkbox"
                           checked={includedRoleIds.has(role.id)}
                           onChange={() => toggleRole(role.id)}
-                          className="h-4 w-4 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-400"
+                          className="h-4 w-4 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-400 dark:border-navy-600 dark:bg-navy-800"
                         />
                         <span>{role.name}</span>
                         <div className="relative shrink-0">
@@ -464,17 +466,17 @@ function ChatUI() {
                             }}
                             // Nota: no uso `inputClass` compartido acá porque trae `w-full`, que le
                             // gana al ancho fijo y estira el campo a todo el espacio disponible.
-                            className="w-14 rounded-lg border border-slate-300 py-1 pl-2 pr-4 text-xs shadow-sm focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-400"
+                            className="w-14 rounded-lg border border-slate-300 py-1 pl-2 pr-4 text-xs shadow-sm focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-400 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100"
                           />
-                          <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
+                          <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500">%</span>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {paramsError && <p className="mt-3 text-sm text-red-600">{paramsError}</p>}
-                {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+                {paramsError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{paramsError}</p>}
+                {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
                 <div className="mt-4 flex justify-end">
                   <button onClick={handleConfirmParams} disabled={confirming} className={btnPrimary}>
                     {confirming ? "Iniciando…" : refineFromId ? "Continuar con estos parámetros" : "Iniciar estimación"}
@@ -486,14 +488,14 @@ function ChatUI() {
         </div>
       ) : (
         <>
-          <div className="flex-1 space-y-4 overflow-y-auto rounded-xl border border-slate-200 bg-slate-100 p-4 shadow-inner">
-            {loadingHistory && messages.length === 0 && <p className="text-sm text-slate-400">Cargando conversación…</p>}
+          <div className="flex-1 space-y-4 overflow-y-auto rounded-xl border border-slate-200 bg-slate-100 p-4 shadow-inner dark:border-navy-700 dark:bg-navy-900/60">
+            {loadingHistory && messages.length === 0 && <p className="text-sm text-slate-400 dark:text-slate-500">Cargando conversación…</p>}
             {!loadingHistory && messages.length === 0 && !requirementContext && (
               <div className="flex h-full flex-col items-center justify-center text-center">
-                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-100">
-                  <Sparkles className="h-6 w-6 text-accent-600" strokeWidth={2} />
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent-100 dark:bg-accent-500/20">
+                  <Sparkles className="h-6 w-6 text-accent-600 dark:text-accent-400" strokeWidth={2} />
                 </div>
-                <p className="max-w-sm text-sm text-slate-400">
+                <p className="max-w-sm text-sm text-slate-400 dark:text-slate-500">
                   Describe el requerimiento del proyecto (mientras más detalle, mejor referencia histórica encontraré). Ejemplo:
                   &ldquo;Necesitamos una app web para gestionar solicitudes de compra, integrada con nuestro ERP, con 5 tipos de
                   usuario&rdquo;.
@@ -501,15 +503,19 @@ function ChatUI() {
               </div>
             )}
             {requirementContext && (
-              <div className="rounded-xl border border-accent-200 bg-accent-50/70 p-4 shadow-sm">
+              <div className="rounded-xl border border-accent-200 bg-accent-50/70 p-4 shadow-sm dark:border-accent-500/30 dark:bg-accent-500/10">
                 <div className="mb-2 flex items-center gap-2">
-                  <FileText className="h-4 w-4 shrink-0 text-accent-600" strokeWidth={2} />
-                  <span className="text-xs font-semibold uppercase tracking-wide text-accent-700">Información considerada para esta estimación</span>
+                  <FileText className="h-4 w-4 shrink-0 text-accent-600 dark:text-accent-400" strokeWidth={2} />
+                  <span className="text-xs font-semibold uppercase tracking-wide text-accent-700 dark:text-accent-300">
+                    Información considerada para esta estimación
+                  </span>
                 </div>
-                <p className="font-medium text-slate-900">{requirementContext.title}</p>
-                <p className="mt-1 whitespace-pre-line text-sm text-slate-600">{requirementContext.description}</p>
-                {requirementContext.detailsLine && <p className="mt-2 text-xs text-slate-500">{requirementContext.detailsLine}</p>}
-                <p className="mt-2 text-xs text-slate-500">
+                <p className="font-medium text-slate-900 dark:text-slate-100">{requirementContext.title}</p>
+                <p className="mt-1 whitespace-pre-line text-sm text-slate-600 dark:text-slate-300">{requirementContext.description}</p>
+                {requirementContext.detailsLine && (
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{requirementContext.detailsLine}</p>
+                )}
+                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                   Se está considerando toda la información registrada de este requerimiento
                   {requirementContext.attachments.length > 0 && (
                     <>
@@ -524,16 +530,25 @@ function ChatUI() {
             )}
             {messages.map((m, i) => (
               <div key={i} className={m.role === "user" ? "flex justify-end" : "flex justify-start"}>
-                <div className={m.role === "user" ? "max-w-[80%] rounded-2xl rounded-tr-sm bg-brand-500 px-4 py-2 text-white shadow-sm" : "max-w-[90%] rounded-2xl rounded-tl-sm bg-white px-4 py-3 shadow-sm"}>
+                <div
+                  className={
+                    m.role === "user"
+                      ? "max-w-[80%] rounded-2xl rounded-tr-sm bg-brand-500 px-4 py-2 text-white shadow-sm"
+                      : "max-w-[90%] rounded-2xl rounded-tl-sm bg-white px-4 py-3 shadow-sm dark:bg-navy-800"
+                  }
+                >
                   {m.role === "user" ? (
                     <p className="whitespace-pre-line text-sm">{m.text}</p>
                   ) : (
                     <>
-                      <div className="prose-report text-sm">
+                      <div className="prose-report text-sm dark:text-slate-200">
                         <ReactMarkdown>{m.text}</ReactMarkdown>
                       </div>
                       {m.estimateId && (
-                        <Link href={`/estimate/${m.estimateId}`} className="mt-2 inline-block text-sm font-medium text-brand-600 hover:underline">
+                        <Link
+                          href={`/estimate/${m.estimateId}`}
+                          className="mt-2 inline-block text-sm font-medium text-brand-600 hover:underline dark:text-brand-400"
+                        >
                           Ver estimación completa →
                         </Link>
                       )}
@@ -544,12 +559,12 @@ function ChatUI() {
             ))}
             {sending && (
               <div className="flex justify-start">
-                <div className="flex items-center gap-2.5 rounded-2xl rounded-tl-sm bg-white px-4 py-3 text-sm text-slate-500 shadow-sm">
+                <div className="flex items-center gap-2.5 rounded-2xl rounded-tl-sm bg-white px-4 py-3 text-sm text-slate-500 shadow-sm dark:bg-navy-800 dark:text-slate-400">
                   <Loader2 className="h-4 w-4 shrink-0 animate-spin text-accent-500" strokeWidth={2.5} />
                   Analizando… esto puede tardar hasta un minuto (busca referencias, estima, calcula costos).
                   <button
                     onClick={handleCancel}
-                    className="ml-1 flex shrink-0 items-center gap-1 rounded-full border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                    className="ml-1 flex shrink-0 items-center gap-1 rounded-full border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-navy-600 dark:text-slate-300 dark:hover:bg-navy-700"
                     title="Deja de esperar la respuesta — el agente puede seguir procesando en el servidor"
                   >
                     <X className="h-3 w-3" strokeWidth={2.5} />
@@ -558,7 +573,7 @@ function ChatUI() {
                 </div>
               </div>
             )}
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
             <div ref={bottomRef} />
           </div>
 
@@ -574,7 +589,7 @@ function ChatUI() {
               }}
               rows={2}
               placeholder="Escribe tu requerimiento o respuesta…"
-              className="flex-1 resize-none rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-400"
+              className="flex-1 resize-none rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-400 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
             />
             <button
               onClick={handleSend}
@@ -594,7 +609,7 @@ function ChatUI() {
 export default function NewEstimatePage() {
   return (
     <RequireAuth>
-      <Suspense fallback={<div className="py-16 text-center text-slate-400">Cargando…</div>}>
+      <Suspense fallback={<div className="py-16 text-center text-slate-400 dark:text-slate-500">Cargando…</div>}>
         <ChatUI />
       </Suspense>
     </RequireAuth>

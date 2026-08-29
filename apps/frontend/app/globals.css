@@ -3,17 +3,17 @@
 @tailwind utilities;
 
 body {
-  @apply bg-slate-50 text-slate-900;
+  @apply bg-slate-50 text-slate-900 dark:bg-navy-900 dark:text-slate-100;
 }
 
 .prose-report h1 {
   @apply text-2xl font-bold mt-6 mb-3;
 }
 .prose-report h2 {
-  @apply text-lg font-semibold mt-5 mb-2 text-slate-800;
+  @apply text-lg font-semibold mt-5 mb-2 text-slate-800 dark:text-slate-200;
 }
 .prose-report h3 {
-  @apply text-base font-semibold mt-3 mb-1 text-slate-700;
+  @apply text-base font-semibold mt-3 mb-1 text-slate-700 dark:text-slate-300;
 }
 .prose-report p {
   @apply mb-2 leading-relaxed;
@@ -26,17 +26,17 @@ body {
 }
 .prose-report th,
 .prose-report td {
-  @apply border border-slate-200 px-2 py-1 text-left;
+  @apply border border-slate-200 px-2 py-1 text-left dark:border-navy-700;
 }
 .prose-report th {
-  @apply bg-slate-100;
+  @apply bg-slate-100 dark:bg-navy-800;
 }
 .prose-report strong {
-  @apply font-semibold text-slate-900;
+  @apply font-semibold text-slate-900 dark:text-slate-100;
 }
 .prose-report a {
-  @apply text-brand-600 font-medium hover:underline;
+  @apply text-brand-600 font-medium hover:underline dark:text-brand-400;
 }
 .prose-report code {
-  @apply rounded bg-slate-100 px-1 py-0.5 text-xs text-slate-700;
+  @apply rounded bg-slate-100 px-1 py-0.5 text-xs text-slate-700 dark:bg-navy-800 dark:text-slate-300;
 }

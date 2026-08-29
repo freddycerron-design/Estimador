@@ -5,6 +5,10 @@ import type { Config } from "tailwindcss";
 // cálido para acciones primarias, violeta suave para insignias de "IA", barra superior
 // con degradado oscuro→naranja).
 const config: Config = {
+  // Modo oscuro adicional al claro actual (spec pedido por usuario) — activado por una clase
+  // `dark` en <html> (ver lib/theme.ts + components/theme-toggle.tsx), no solo por preferencia
+  // del sistema, para que el usuario pueda elegirlo explícitamente.
+  darkMode: "class",
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
   theme: {
     extend: {

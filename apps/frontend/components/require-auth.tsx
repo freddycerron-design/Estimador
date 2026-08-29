@@ -8,13 +8,13 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div className="py-16 text-center text-slate-400">Cargando…</div>;
+    return <div className="py-16 text-center text-slate-400 dark:text-slate-500">Cargando…</div>;
   }
 
   if (!user) {
     return (
       <div className="mx-auto max-w-sm py-16 text-center">
-        <p className="mb-4 text-slate-600">Necesitas iniciar sesión para continuar.</p>
+        <p className="mb-4 text-slate-600 dark:text-slate-300">Necesitas iniciar sesión para continuar.</p>
         <Link href="/login" className={btnPrimary}>
           Ir a iniciar sesión
         </Link>

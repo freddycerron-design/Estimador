@@ -37,8 +37,8 @@ function EstimateDetail() {
       .catch((err) => setError(err instanceof Error ? err.message : "Error al cargar la estimación"));
   }, [id]);
 
-  if (error) return <p className="text-red-600">{error}</p>;
-  if (!data) return <p className="text-slate-400">Cargando…</p>;
+  if (error) return <p className="text-red-600 dark:text-red-400">{error}</p>;
+  if (!data) return <p className="text-slate-400 dark:text-slate-500">Cargando…</p>;
 
   const est = data.estimate as Record<string, any>;
 
@@ -67,43 +67,49 @@ function EstimateDetail() {
           </>
         }
       />
-      {exportError && <p className="text-sm text-red-600">{exportError}</p>}
+      {exportError && <p className="text-sm text-red-600 dark:text-red-400">{exportError}</p>}
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className={cardPadded}>
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Duración (semanas)</p>
-          <p className="mt-1 font-display text-lg font-semibold tabular-nums text-slate-900">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">Duración (semanas)</p>
+          <p className="mt-1 font-display text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">
             {est.duration_weeks_optimistic}–{est.duration_weeks_pessimistic}{" "}
-            <span className="text-brand-600">({est.duration_weeks_probable} probable)</span>
+            <span className="text-brand-600 dark:text-brand-400">({est.duration_weeks_probable} probable)</span>
           </p>
         </div>
         <div className={cardPadded}>
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Costo ({est.currency})</p>
-          <p className="mt-1 font-display text-lg font-semibold tabular-nums text-slate-900">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">Costo ({est.currency})</p>
+          <p className="mt-1 font-display text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">
             {Number(est.cost_optimistic).toLocaleString()}–{Number(est.cost_pessimistic).toLocaleString()}{" "}
-            <span className="text-brand-600">({Number(est.cost_probable).toLocaleString()} probable)</span>
+            <span className="text-brand-600 dark:text-brand-400">({Number(est.cost_probable).toLocaleString()} probable)</span>
           </p>
         </div>
         <div className={cardPadded}>
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Confianza</p>
-          <p className="mt-1 font-display text-lg font-semibold tabular-nums text-slate-900">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">Confianza</p>
+          <p className="mt-1 font-display text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">
             {Math.round(Number(est.confidence_score) * 100)}%{" "}
-            <span className="text-sm font-normal text-slate-500">{est.similarity_threshold_met ? "· umbral cumplido" : "· bajo umbral"}</span>
+            <span className="text-sm font-normal text-slate-500 dark:text-slate-400">
+              {est.similarity_threshold_met ? "· umbral cumplido" : "· bajo umbral"}
+            </span>
           </p>
         </div>
       </div>
 
       <div className={cardPadded}>
-        <h2 className="mb-3 font-semibold text-slate-900">Proyectos de referencia</h2>
+        <h2 className="mb-3 font-semibold text-slate-900 dark:text-slate-100">Proyectos de referencia</h2>
         {data.referenceProjects.length === 0 ? (
-          <p className="text-sm text-slate-400">Ninguno superó el umbral de similitud.</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500">Ninguno superó el umbral de similitud.</p>
         ) : (
           <ul className="space-y-2 text-sm">
             {data.referenceProjects.map((r, i) => (
               <li key={i} className="flex items-center gap-2">
-                <span className="font-medium text-slate-800">{r.projectName}</span>
+                <span className="font-medium text-slate-800 dark:text-slate-200">{r.projectName}</span>
                 <span className={badge}>{Math.round(Number(r.similarity_score) * 100)}% similitud</span>
-                {r.is_outlier && <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">outlier, excluido</span>}
+                {r.is_outlier && (
+                  <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                    outlier, excluido
+                  </span>
+                )}
               </li>
             ))}
           </ul>
@@ -112,12 +118,12 @@ function EstimateDetail() {
 
       <div className={cardPadded}>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-semibold text-slate-900">Esfuerzo por fase y rol</h2>
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100">Esfuerzo por fase y rol</h2>
           <ProvenanceLegend />
         </div>
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-200 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
+            <tr className="border-b border-slate-200 text-left text-xs font-medium uppercase tracking-wide text-slate-400 dark:border-navy-700 dark:text-slate-500">
               <th className="py-2">Fase</th>
               <th>Rol</th>
               <th>Horas</th>
@@ -126,10 +132,10 @@ function EstimateDetail() {
           </thead>
           <tbody>
             {data.lineItems.map((li, i) => (
-              <tr key={i} className="border-b border-slate-100 last:border-0">
-                <td className="py-2 text-slate-700">{li.phaseName}</td>
-                <td className="text-slate-700">{li.roleName}</td>
-                <td className="font-display font-medium tabular-nums text-slate-900">{li.hours}</td>
+              <tr key={i} className="border-b border-slate-100 last:border-0 dark:border-navy-700">
+                <td className="py-2 text-slate-700 dark:text-slate-300">{li.phaseName}</td>
+                <td className="text-slate-700 dark:text-slate-300">{li.roleName}</td>
+                <td className="font-display font-medium tabular-nums text-slate-900 dark:text-slate-100">{li.hours}</td>
                 <td>
                   <ProvenanceBadge value={li.provenance} />
                 </td>
@@ -140,12 +146,12 @@ function EstimateDetail() {
       </div>
 
       <div className={cardPadded}>
-        <h2 className="mb-3 flex items-center gap-1.5 font-semibold text-slate-900">
+        <h2 className="mb-3 flex items-center gap-1.5 font-semibold text-slate-900 dark:text-slate-100">
           <Star className="h-4 w-4 text-accent-500" strokeWidth={2} />
           Feedback
         </h2>
         {feedbackSent ? (
-          <p className="text-sm text-emerald-600">¡Gracias! Tu feedback queda registrado para el ciclo de aprendizaje.</p>
+          <p className="text-sm text-emerald-600 dark:text-emerald-400">¡Gracias! Tu feedback queda registrado para el ciclo de aprendizaje.</p>
         ) : (
           <form onSubmit={handleFeedback} className="space-y-3">
             <div>

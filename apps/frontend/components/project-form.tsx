@@ -85,7 +85,7 @@ export function ProjectForm({
   const label = labelClass;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 rounded-xl border border-accent-200 bg-accent-50/40 p-4">
+    <form onSubmit={handleSubmit} className="space-y-3 rounded-xl border border-accent-200 bg-accent-50/40 p-4 dark:border-accent-500/30 dark:bg-accent-500/10">
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <label className={label}>Nombre *</label>
@@ -164,7 +164,7 @@ export function ProjectForm({
         <input value={risks} onChange={(e) => setRisks(e.target.value)} className={field} />
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
       <div className="flex gap-2 pt-1">
         <button type="submit" disabled={submitting} className={btnPrimary}>
           {submitting ? "Guardando…" : submitLabel}
