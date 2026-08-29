@@ -372,7 +372,9 @@ function ChatUI() {
                               const pct = Math.min(1, Math.max(0.01, Number(e.target.value) / 100));
                               setAllocationPctByRole((prev) => ({ ...prev, [role.id]: pct }));
                             }}
-                            className={`${inputClass} w-16 pr-5 text-xs`}
+                            // Nota: no uso `inputClass` compartido acá porque trae `w-full`, que le
+                            // gana al ancho fijo y estira el campo a todo el espacio disponible.
+                            className="w-14 rounded-lg border border-slate-300 py-1 pl-2 pr-4 text-xs shadow-sm focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-400"
                           />
                           <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">%</span>
                         </div>
