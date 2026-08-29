@@ -313,8 +313,12 @@ function ChatUI() {
                         <input
                           type="checkbox"
                           checked={paramForm[key].included}
-                          onChange={(e) => updateParam(key, { included: e.target.checked })}
-                          className="h-4 w-4 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-400"
+                          // En una estimación NUEVA los 5 van siempre marcados y no se pueden
+                          // desmarcar (spec pedido por usuario). En refinamiento sigue editable,
+                          // como antes — precarga lo que quedó la vez anterior, ajustable.
+                          disabled={!refineFromId}
+                          onChange={refineFromId ? (e) => updateParam(key, { included: e.target.checked }) : undefined}
+                          className="h-4 w-4 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-400 disabled:cursor-not-allowed disabled:opacity-70"
                         />
                         <label className="w-80 shrink-0 text-sm text-slate-600">{ESTIMATION_PARAMETER_LABELS[key]}</label>
                         <div className="relative">
