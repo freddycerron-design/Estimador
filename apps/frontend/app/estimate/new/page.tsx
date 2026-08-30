@@ -1,12 +1,14 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Sparkles, Send, Plus, SlidersHorizontal, Loader2, FileText, X } from "lucide-react";
 import { RequireAuth } from "@/components/require-auth";
 import { PageHeader } from "@/components/page-header";
+import { createChatMarkdownComponents } from "@/components/chat-markdown";
 import { btnPrimary, btnSecondary, cardPadded, input as inputClass } from "@/lib/ui-classes";
 import {
   createConversation,
@@ -101,6 +103,10 @@ function ChatUI() {
   // Permite cancelar la ESPERA de la respuesta en curso (spec pedido por usuario) — ver botón
   // "Cancelar" junto al indicador de "Analizando…".
   const sendAbortRef = useRef<AbortController | null>(null);
+  // Referencia al textarea de respuesta — al hacer clic en una opción clickeable de una pregunta
+  // numerada (spec pedido por usuario), se agrega al input y se enfoca acá para que el usuario
+  // pueda seguir completando su respuesta antes de enviar.
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Panel de parámetros de estimación: se muestra ANTES de arrancar la conversación (spec pedido
   // por usuario). Si ya venimos de una conversación existente (?c=) no hay nada que decidir —
@@ -343,6 +349,28 @@ function ChatUI() {
     router.push("/estimates");
   }
 
+  // Agrega texto al input de respuesta (sin pisar lo que el usuario ya haya escrito, por si está
+  // respondiendo varias preguntas numeradas antes de enviar) y deja el cursor listo para seguir
+  // escribiendo — usado por las opciones clickeables de las preguntas numeradas.
+  function appendAnswerToInput(text: string) {
+    setInput((prev) => (prev.trim().length > 0 ? `${prev.replace(/\s+$/, "")}\n${text}` : text));
+    requestAnimationFrame(() => {
+      const el = textareaRef.current;
+      if (!el) return;
+      el.focus();
+      const len = el.value.length;
+      el.setSelectionRange(len, len);
+    });
+  }
+
+  // Click en una opción de una pregunta numerada (spec pedido por usuario) — antepone el número de
+  // la pregunta para que quede claro a cuál responde, incluso si se completan varias antes de
+  // enviar. "Otros" no inserta un valor: deja el número listo para que el usuario escriba el suyo.
+  function handleOptionClick(questionNumber: number, optionText: string, isOther: boolean) {
+    appendAnswerToInput(isOther ? `${questionNumber}. ` : `${questionNumber}. ${optionText}`);
+  }
+  const chatMarkdownComponents = useMemo(() => createChatMarkdownComponents(handleOptionClick), []); // eslint-disable-line react-hooks/exhaustive-deps
+
   function startNewConversation() {
     setConversationId(null);
     setMessages([]);
@@ -556,7 +584,9 @@ function ChatUI() {
                   ) : (
                     <>
                       <div className="prose-report text-sm dark:text-slate-200">
-                        <ReactMarkdown>{m.text}</ReactMarkdown>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={chatMarkdownComponents}>
+                          {m.text}
+                        </ReactMarkdown>
                       </div>
                       {m.estimateId && (
                         <Link
@@ -593,6 +623,7 @@ function ChatUI() {
 
           <div className="mt-3 flex gap-2">
             <textarea
+              ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => {
