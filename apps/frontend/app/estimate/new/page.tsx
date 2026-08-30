@@ -332,6 +332,17 @@ function ChatUI() {
     sendAbortRef.current?.abort();
   }
 
+  // Cancela todo el proceso de estimación en curso (spec pedido por usuario, distinto del botón
+  // de arriba: ese solo deja de esperar la respuesta actual, este abandona la conversación
+  // completa). Deja de esperar cualquier respuesta pendiente y saca al usuario del flujo — no hay
+  // forma de marcar la conversación como abandonada en el backend, así que esto es solo del lado
+  // del cliente, igual que la cancelación de espera.
+  function handleCancelEstimation() {
+    if (!confirm("¿Cancelar esta estimación? Se perderá el progreso de esta conversación.")) return;
+    sendAbortRef.current?.abort();
+    router.push("/estimates");
+  }
+
   function startNewConversation() {
     setConversationId(null);
     setMessages([]);
@@ -534,7 +545,10 @@ function ChatUI() {
                   className={
                     m.role === "user"
                       ? "max-w-[80%] rounded-2xl rounded-tr-sm bg-brand-500 px-4 py-2 text-white shadow-sm"
-                      : "max-w-[90%] rounded-2xl rounded-tl-sm bg-white px-4 py-3 shadow-sm dark:bg-navy-800"
+                      // Ancho completo (spec pedido por usuario) para que el bloque de resultado quede
+                      // alineado con la tarjeta de "información considerada" — ambos ocupan el mismo
+                      // ancho dentro del contenedor del chat, en vez del 90% angosto anterior.
+                      : "w-full rounded-2xl rounded-tl-sm bg-white px-4 py-3 shadow-sm dark:bg-navy-800"
                   }
                 >
                   {m.role === "user" ? (
@@ -587,18 +601,28 @@ function ChatUI() {
                   handleSend();
                 }
               }}
-              rows={2}
+              rows={5}
               placeholder="Escribe tu requerimiento o respuesta…"
               className="flex-1 resize-none rounded-xl border border-slate-300 px-3 py-2.5 text-sm shadow-sm focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-400 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500"
             />
-            <button
-              onClick={handleSend}
-              disabled={sending || !input.trim()}
-              className="flex items-center gap-1.5 self-end rounded-full bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-600 disabled:opacity-50"
-            >
-              <Send className="h-4 w-4" strokeWidth={2} />
-              Enviar
-            </button>
+            <div className="flex flex-col justify-end gap-2">
+              <button
+                onClick={handleSend}
+                disabled={sending || !input.trim()}
+                className="flex items-center justify-center gap-1.5 rounded-full bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-600 disabled:opacity-50"
+              >
+                <Send className="h-4 w-4" strokeWidth={2} />
+                Enviar
+              </button>
+              <button
+                onClick={handleCancelEstimation}
+                className="flex items-center justify-center gap-1.5 rounded-full border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-navy-600 dark:text-slate-300 dark:hover:bg-navy-700"
+                title="Abandona esta estimación por completo y vuelve al listado"
+              >
+                <X className="h-4 w-4" strokeWidth={2} />
+                Cancelar
+              </button>
+            </div>
           </div>
         </>
       )}
