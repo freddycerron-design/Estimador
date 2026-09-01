@@ -34,10 +34,10 @@ function NavBar() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         <Link href="/" className="flex items-center gap-2.5">
           <div
-            className="h-8 w-8 shrink-0 rounded-lg bg-white shadow-sm"
+            className="h-10 w-10 shrink-0 rounded-lg bg-white shadow-sm"
             style={{ backgroundImage: "url(/brand/estimadora-logo.jpg)", backgroundSize: "cover", backgroundPosition: "center" }}
           />
-          <span className="font-display text-base font-semibold tracking-tight">
+          <span className="font-display text-lg font-semibold tracking-tight">
             <span className="text-white">Estima</span>
             <span className="text-brand-400">DORA</span>
           </span>
