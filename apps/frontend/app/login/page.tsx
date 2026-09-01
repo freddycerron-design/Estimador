@@ -32,8 +32,7 @@ export default function LoginPage() {
   return (
     <div className="mx-auto max-w-sm py-16">
       <div className="mb-6 flex flex-col items-center text-center">
-        {/* Logo completo (ícono + wordmark + tagline), no solo el ícono (spec pedido por usuario). */}
-        <Image src="/brand/estimadora-logo.jpg" alt="EstimaDORA — Sistema de Estimación de Proyectos" width={2276} height={580} className="mb-3 h-16 w-auto object-contain" priority />
+        <Image src="/brand/estimadora-logo.jpg" alt="EstimaDORA IA" width={160} height={160} className="mb-3 h-28 w-28 rounded-2xl object-contain" priority />
         <h1 className="font-display text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
           {mode === "signin" ? "Iniciar sesión" : "Crear cuenta"}
         </h1>

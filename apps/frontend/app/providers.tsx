@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { FileText, FolderKanban, Brain, LogOut, ClipboardList, Settings } from "lucide-react";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
@@ -33,20 +32,15 @@ function NavBar() {
   return (
     <header className="bg-nav-gradient shadow-sm">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <Link href="/" className="flex items-center">
-          {/* Logo completo (ícono + wordmark "EstimaDORA" + tagline), no solo el ícono — el texto
-              del logo va en azul marino, así que necesita este respaldo blanco para no perderse
-              contra el navbar oscuro (spec pedido por usuario: reemplazar la imagen en su totalidad). */}
-          <div className="flex h-9 shrink-0 items-center rounded-lg bg-white px-2 py-1 shadow-sm">
-            <Image
-              src="/brand/estimadora-logo.jpg"
-              alt="EstimaDORA — Sistema de Estimación de Proyectos"
-              width={2276}
-              height={580}
-              className="h-full w-auto object-contain"
-              priority
-            />
-          </div>
+        <Link href="/" className="flex items-center gap-2.5">
+          <div
+            className="h-8 w-8 shrink-0 rounded-lg bg-white shadow-sm"
+            style={{ backgroundImage: "url(/brand/estimadora-logo.jpg)", backgroundSize: "cover", backgroundPosition: "center" }}
+          />
+          <span className="font-display text-base font-semibold tracking-tight">
+            <span className="text-white">Estima</span>
+            <span className="text-brand-400">DORA</span>
+          </span>
         </Link>
         {!loading && user && (
           <nav className="flex items-center gap-1">
