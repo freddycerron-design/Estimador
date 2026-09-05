@@ -33,10 +33,12 @@ function NavBar() {
     <header className="bg-nav-gradient shadow-sm">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         <Link href="/" className="flex items-center gap-2.5">
-          <div
-            className="h-12 w-12 shrink-0 rounded-lg bg-white shadow-sm"
-            style={{ backgroundImage: "url(/brand/estimadora-logo.jpg)", backgroundSize: "cover", backgroundPosition: "center" }}
-          />
+          {/* Antes usaba `style={{backgroundImage:...}}` — un atributo `style` inline que un CSP
+              estricto (spec pedido por usuario: cumplir CSP nivel 3) bloquea salvo que se permita
+              `style-src-attr 'unsafe-inline'`. Con una clase arbitraria de Tailwind (valor fijo,
+              no dinámico) el mismo fondo queda resuelto en el CSS compilado, sin necesitar esa
+              excepción. */}
+          <div className="h-12 w-12 shrink-0 rounded-lg bg-white bg-[url('/brand/estimadora-logo.jpg')] bg-cover bg-center shadow-sm" />
           <span className="font-display text-xl font-semibold tracking-tight">
             <span className="text-white">Estima</span>
             <span className="text-brand-400">DORA</span>

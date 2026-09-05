@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+import helmet from "@fastify/helmet";
 import multipart from "@fastify/multipart";
 import { env } from "./config/env.js";
 import { db } from "./db/insforge-client.js";
@@ -22,6 +23,19 @@ export function buildApp() {
   });
 
   app.register(cors, { origin: true });
+  // Cabeceras de seguridad (spec pedido por usuario: cumplir CSP nivel 3). Esta API solo sirve
+  // JSON — nunca HTML — así que un CSP con nonces (relevante para bloquear scripts inline en un
+  // documento) no aplica acá; `default-src 'none'` documenta esa intención explícitamente (nada
+  // debería cargarse jamás como documento activo desde este origen) sin el costo de mantener
+  // nonces del lado del servidor. El resto de las cabeceras de helmet (X-Content-Type-Options,
+  // Strict-Transport-Security, Referrer-Policy, etc.) sí protegen una API JSON — se dejan en sus
+  // valores por defecto. El CSP nonce-based real vive en el frontend (ver `middleware.ts`).
+  app.register(helmet, {
+    contentSecurityPolicy: {
+      useDefaults: false, // sin esto, helmet agrega igual sus directivas por defecto (permisivas) además de defaultSrc
+      directives: { defaultSrc: ["'none'"] },
+    },
+  });
   app.register(multipart, { limits: { fileSize: 10 * 1024 * 1024 } }); // 10MB máx. para import Excel/CSV
 
   // Por defecto, Fastify rechaza con 400 un POST/DELETE sin body si el cliente igual manda

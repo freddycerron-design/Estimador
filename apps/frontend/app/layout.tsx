@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -15,12 +16,18 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // Nonce generado en middleware.ts (CSP nivel 3, spec pedido por usuario) — leerlo acá con
+  // `headers()` vuelve este layout dinámico (no pre-renderizable estáticamente): un nonce debe
+  // ser distinto en cada respuesta, así que es incompatible por definición con una página
+  // estática generada una sola vez en build. Es el trade-off documentado del patrón oficial de
+  // Next.js para CSP con nonce.
+  const nonce = headers().get("x-nonce") ?? undefined;
   return (
     <html lang="es" className={`${spaceGrotesk.variable} ${inter.variable}`} suppressHydrationWarning>
       <head>
         {/* Aplica el modo oscuro (si corresponde) ANTES del primer paint — evita el flash de
             tema claro al recargar con "oscuro" u "oscuro por sistema" ya elegido. */}
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body suppressHydrationWarning>
         <Providers>{children}</Providers>
