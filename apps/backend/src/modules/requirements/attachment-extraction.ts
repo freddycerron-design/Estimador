@@ -32,6 +32,28 @@ function decodeXmlEntities(s: string): string {
 }
 
 /**
+ * Firma de OLE2/Compound File Binary Format (D0 CF 11 E0 A1 B1 1A E1). La usan tanto los
+ * formatos binarios antiguos de Office (.doc/.xls/.ppt) como los .docx/.xlsx/.pptx MODERNOS
+ * protegidos con contraseña — Office los envuelve en este contenedor cifrado en vez de guardarlos
+ * como zip plano (que es lo que .docx/.xlsx/.pptx son por dentro cuando NO tienen contraseña).
+ *
+ * Detectarla ANTES de intentar parsear un .docx/.pptx/.xlsx como zip evita el error genérico y
+ * confuso de la librería subyacente (ej. JSZip: "Can't find end of central directory: is this a
+ * zip file?") — un archivo así realmente no es un zip por fuera, pero el motivo (protegido con
+ * contraseña, o formato antiguo mal renombrado) es información accionable que el mensaje
+ * genérico no da (reportado por el usuario: el error "lo identifica como un zip", cuando el
+ * verdadero problema es que NO lo es).
+ */
+const OLE2_SIGNATURE = Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
+
+function looksLikeOle2Container(buffer: Buffer): boolean {
+  return buffer.length >= 8 && buffer.subarray(0, 8).equals(OLE2_SIGNATURE);
+}
+
+const OLE2_NOTE =
+  'Este archivo no se pudo leer: por dentro no es un Office moderno (el formato que su extensión promete), sino el contenedor antiguo de Office (OLE2) — típico de un archivo protegido con contraseña, o guardado en el formato binario previo a 2007 aunque lleve una extensión moderna. Quita la contraseña o reexporta el archivo sin protección (sin cambiarle el formato) y vuelve a subirlo.';
+
+/**
  * .pptx es un zip con una entrada XML por diapositiva (`ppt/slides/slideN.xml`) — se extrae el
  * texto de cada `<a:t>` (los cuadros de texto de PowerPoint) sin depender de una librería de
  * parseo de Office completa. El .ppt binario antiguo (pre-2007) no usa este formato y se marca
@@ -70,6 +92,7 @@ export async function extractAttachmentText(buffer: Buffer, filename: string, mi
     }
 
     if (ext === "docx" || mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+      if (looksLikeOle2Container(buffer)) return { text: null, status: "unsupported", note: OLE2_NOTE };
       const { value } = await mammoth.extractRawText({ buffer });
       const { text, truncated } = truncate(value ?? "");
       if (!text) return { text: null, status: "error", note: "No se pudo extraer texto del documento Word." };
@@ -77,6 +100,7 @@ export async function extractAttachmentText(buffer: Buffer, filename: string, mi
     }
 
     if (ext === "pptx" || mimeType === "application/vnd.openxmlformats-officedocument.presentationml.presentation") {
+      if (looksLikeOle2Container(buffer)) return { text: null, status: "unsupported", note: OLE2_NOTE };
       const raw = await extractPptxText(buffer);
       const { text, truncated } = truncate(raw);
       if (!text) return { text: null, status: "error", note: "No se pudo extraer texto de la presentación (¿las diapositivas tienen solo imágenes, sin cuadros de texto?)." };
@@ -92,6 +116,11 @@ export async function extractAttachmentText(buffer: Buffer, filename: string, mi
     }
 
     if (ext === "xlsx" || ext === "xls" || mimeType.includes("spreadsheet") || mimeType.includes("excel")) {
+      // Ojo: a diferencia de docx/pptx, un .xls (extensión antigua) SIEMPRE es OLE2 — es su
+      // formato normal, y SheetJS lo lee sin problema. Solo es anómalo cuando la extensión
+      // promete el formato moderno (.xlsx) pero el contenido es OLE2 (protegido con contraseña,
+      // o un .xls legado renombrado a .xlsx).
+      if (ext === "xlsx" && looksLikeOle2Container(buffer)) return { text: null, status: "unsupported", note: OLE2_NOTE };
       const workbook = XLSX.read(buffer, { type: "buffer" });
       const parts = workbook.SheetNames.map((name) => {
         const sheet = workbook.Sheets[name];
