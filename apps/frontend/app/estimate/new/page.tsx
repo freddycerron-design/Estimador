@@ -83,6 +83,10 @@ function isAbortError(err: unknown): boolean {
 const CANCELLED_NOTICE =
   "_Se canceló la espera de esta respuesta. El agente puede seguir procesando del lado del servidor — si termina, el resultado quedará guardado en el historial de esta conversación aunque no lo veas acá._";
 
+// Parámetros cuyo campo de % reemplaza la flecha nativa del navegador por flechas propias en
+// color de marca (spec pedido por usuario) — el resto conserva la flecha nativa.
+const CUSTOM_ARROW_KEYS = new Set<EstimationParameterKey>(["DEFAULT_CONTINGENCY_PCT", "DEFAULT_OVERHEAD_PCT"]);
+
 function ChatUI() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -463,11 +467,12 @@ function ChatUI() {
                             value={isPercent ? paramForm[key].value * 100 : paramForm[key].value}
                             disabled={!paramForm[key].included || !isValueEditable}
                             onChange={(e) => updateParam(key, { value: isPercent ? Number(e.target.value) / 100 : Number(e.target.value) })}
-                            // Flechas nativas ocultas solo para Contingencia (spec pedido por
-                            // usuario) — se reemplazan por las propias de más abajo, mismo tamaño
-                            // de campo, en color de marca.
+                            // Flechas nativas ocultas solo para Contingencia y Overhead (spec
+                            // pedido por usuario) — se reemplazan por las propias de más abajo,
+                            // mismo tamaño de campo, en color de marca. El resto de parámetros
+                            // conserva la flecha nativa del navegador.
                             className={`${inputClass} max-w-[140px] disabled:bg-slate-50 disabled:text-slate-400 dark:disabled:bg-navy-900/60 dark:disabled:text-slate-500 ${isPercent ? "pr-7" : ""} ${
-                              key === "DEFAULT_CONTINGENCY_PCT"
+                              CUSTOM_ARROW_KEYS.has(key)
                                 ? "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                                 : ""
                             }`}
@@ -475,13 +480,13 @@ function ChatUI() {
                           {isPercent && (
                             <span
                               className={`pointer-events-none absolute top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-500 ${
-                                key === "DEFAULT_CONTINGENCY_PCT" ? "right-6" : "right-2.5"
+                                CUSTOM_ARROW_KEYS.has(key) ? "right-6" : "right-2.5"
                               }`}
                             >
                               %
                             </span>
                           )}
-                          {key === "DEFAULT_CONTINGENCY_PCT" && (
+                          {CUSTOM_ARROW_KEYS.has(key) && (
                             <div className="absolute right-1 top-1/2 flex -translate-y-1/2 flex-col leading-none">
                               <button
                                 type="button"
@@ -489,7 +494,7 @@ function ChatUI() {
                                 disabled={!paramForm[key].included || !isValueEditable}
                                 onClick={() => updateParam(key, { value: Math.min(1, Math.max(0, paramForm[key].value + 0.01)) })}
                                 className="text-brand-500 hover:text-brand-600 disabled:pointer-events-none disabled:opacity-30 dark:text-brand-400 dark:hover:text-brand-300"
-                                aria-label="Aumentar contingencia"
+                                aria-label={`Aumentar ${ESTIMATION_PARAMETER_LABELS[key]}`}
                               >
                                 <ChevronUp className="h-2.5 w-2.5" strokeWidth={3} />
                               </button>
@@ -499,7 +504,7 @@ function ChatUI() {
                                 disabled={!paramForm[key].included || !isValueEditable}
                                 onClick={() => updateParam(key, { value: Math.min(1, Math.max(0, paramForm[key].value - 0.01)) })}
                                 className="text-brand-500 hover:text-brand-600 disabled:pointer-events-none disabled:opacity-30 dark:text-brand-400 dark:hover:text-brand-300"
-                                aria-label="Disminuir contingencia"
+                                aria-label={`Disminuir ${ESTIMATION_PARAMETER_LABELS[key]}`}
                               >
                                 <ChevronDown className="h-2.5 w-2.5" strokeWidth={3} />
                               </button>
