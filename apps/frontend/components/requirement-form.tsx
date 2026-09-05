@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Paperclip, X, FileText, AlertTriangle } from "lucide-react";
+import { Paperclip, X, FileText, AlertTriangle, Download } from "lucide-react";
 import type { RequirementFormInput, RequirementDTO, RequirementAttachmentDTO } from "@/lib/api-client";
 import { listRequirementAttachments, uploadRequirementAttachment, deleteRequirementAttachment } from "@/lib/api-client";
 import { btnPrimary, btnSecondary, input as inputClass, label as labelClass } from "@/lib/ui-classes";
@@ -230,6 +230,18 @@ export function RequirementForm({
                 <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[a.extraction_status]}`} title={a.extraction_note ?? undefined}>
                   {STATUS_LABELS[a.extraction_status]}
                 </span>
+                {a.storage_url && (
+                  <a
+                    href={a.storage_url}
+                    download={a.filename}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 text-slate-400 hover:text-brand-600 dark:text-slate-500 dark:hover:text-brand-400"
+                    title="Descargar archivo"
+                  >
+                    <Download className="h-4 w-4" strokeWidth={2} />
+                  </a>
+                )}
                 <button
                   type="button"
                   onClick={() => removeExistingAttachment(a.id)}
