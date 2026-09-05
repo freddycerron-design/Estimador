@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Sparkles, Send, Plus, SlidersHorizontal, Loader2, FileText, X } from "lucide-react";
+import { Sparkles, Send, Plus, SlidersHorizontal, Loader2, FileText, X, ChevronUp, ChevronDown } from "lucide-react";
 import { RequireAuth } from "@/components/require-auth";
 import { PageHeader } from "@/components/page-header";
 import { createChatMarkdownComponents } from "@/components/chat-markdown";
@@ -394,6 +394,17 @@ function ChatUI() {
     });
   }
 
+  // Suma/resta 1 punto porcentual al % de asignación de un rol — usado por las flechas propias
+  // que reemplazan las nativas del navegador (spec pedido por usuario: más chicas y con color de
+  // marca, ya que la flecha nativa no se puede recolorear vía CSS).
+  function stepAllocationPct(roleId: string, deltaPct: number) {
+    setAllocationPctByRole((prev) => {
+      const currentPct = Math.round((prev[roleId] ?? 1) * 100);
+      const next = Math.min(100, Math.max(1, currentPct + deltaPct));
+      return { ...prev, [roleId]: next / 100 };
+    });
+  }
+
   return (
     <div className="flex h-[calc(100vh-160px)] flex-col">
       <PageHeader
@@ -509,10 +520,33 @@ function ChatUI() {
                             // Nota: no uso `inputClass` compartido acá porque trae `w-full`, que le
                             // gana al ancho fijo y estira el campo a todo el espacio disponible.
                             // Ancho ampliado (spec pedido por usuario) para que 3 dígitos (100%) +
-                            // el "%" + la flecha nativa del navegador no queden amontonados.
-                            className="w-20 rounded-lg border border-slate-300 py-1 pl-2.5 pr-7 text-xs shadow-sm focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-400 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100"
+                            // el "%" + las flechas no queden amontonados. Flechas nativas ocultas
+                            // (spec pedido por usuario: reducir tamaño y darles color de marca —
+                            // la flecha nativa del navegador no se puede recolorear vía CSS, así
+                            // que se reemplaza por las propias de más abajo).
+                            className="w-20 rounded-lg border border-slate-300 py-1 pl-2.5 pr-7 text-xs shadow-sm [appearance:textfield] focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-400 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                           />
                           <span className="pointer-events-none absolute right-[19px] top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500">%</span>
+                          <div className="absolute right-1 top-1/2 flex -translate-y-1/2 flex-col leading-none">
+                            <button
+                              type="button"
+                              tabIndex={-1}
+                              onClick={() => stepAllocationPct(role.id, 1)}
+                              className="text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300"
+                              aria-label={`Aumentar % de ${role.name}`}
+                            >
+                              <ChevronUp className="h-2.5 w-2.5" strokeWidth={3} />
+                            </button>
+                            <button
+                              type="button"
+                              tabIndex={-1}
+                              onClick={() => stepAllocationPct(role.id, -1)}
+                              className="text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300"
+                              aria-label={`Disminuir % de ${role.name}`}
+                            >
+                              <ChevronDown className="h-2.5 w-2.5" strokeWidth={3} />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
