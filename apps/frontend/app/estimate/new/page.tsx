@@ -491,9 +491,10 @@ function ChatUI() {
                           onChange={() => toggleRole(role.id)}
                           className="h-4 w-4 shrink-0 rounded border-slate-300 text-brand-600 focus:ring-brand-400 dark:border-navy-600 dark:bg-navy-800"
                         />
-                        {/* Alineación del % pedida solo para "Project Manager" — los demás roles
-                            mantienen el % pegado al nombre (spec pedido por usuario). */}
-                        <span className={role.name === "Project Manager" ? "flex-1" : undefined}>{role.name}</span>
+                        {/* El nombre estira su espacio disponible (spec pedido por usuario, mismo
+                            criterio que antes solo tenía "Project Manager") para que el % de
+                            todos los roles quede alineado en el mismo borde derecho. */}
+                        <span className="flex-1">{role.name}</span>
                         <div className="relative shrink-0">
                           <input
                             type="number"
