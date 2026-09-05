@@ -38,7 +38,7 @@ function NavBar() {
               `style-src-attr 'unsafe-inline'`. Con una clase arbitraria de Tailwind (valor fijo,
               no dinámico) el mismo fondo queda resuelto en el CSS compilado, sin necesitar esa
               excepción. */}
-          <div className="h-12 w-12 shrink-0 rounded-lg bg-white bg-[url('/brand/estimadora-logo.jpg')] bg-cover bg-center shadow-sm" />
+          <div className="h-16 w-16 shrink-0 rounded-lg bg-white bg-[url('/brand/estimadora-logo.jpg')] bg-cover bg-center shadow-sm" />
           <span className="font-display text-xl font-semibold tracking-tight">
             <span className="text-white">Estima</span>
             <span className="text-brand-400">DORA</span>
