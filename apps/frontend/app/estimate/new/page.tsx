@@ -505,9 +505,11 @@ function ChatUI() {
                             }}
                             // Nota: no uso `inputClass` compartido acá porque trae `w-full`, que le
                             // gana al ancho fijo y estira el campo a todo el espacio disponible.
-                            className="w-14 rounded-lg border border-slate-300 py-1 pl-2 pr-4 text-xs shadow-sm focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-400 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100"
+                            // Ancho ampliado (spec pedido por usuario) para que 3 dígitos (100%) +
+                            // el "%" + la flecha nativa del navegador no queden amontonados.
+                            className="w-20 rounded-lg border border-slate-300 py-1 pl-2.5 pr-7 text-xs shadow-sm focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-400 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100"
                           />
-                          <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500">%</span>
+                          <span className="pointer-events-none absolute right-[19px] top-1/2 -translate-y-1/2 text-xs text-slate-400 dark:text-slate-500">%</span>
                         </div>
                       </div>
                     ))}
