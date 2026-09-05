@@ -170,8 +170,8 @@ export const estimationSkill = defineSkill<
       `Estimación ponderada por similitud entre ${references.length} proyecto(s) histórico(s) de referencia.`,
       "Las fases/roles que no aparecen en todas las referencias quedan proporcionalmente sub-representadas en el promedio ponderado.",
       references.length === 1
-        ? "Con una sola referencia usable, el rango optimista/pesimista usa un margen de incertidumbre por defecto (±15%), no dispersión real observada."
-        : `Rango calculado a partir de la dispersión real de esfuerzo entre las ${references.length} referencias (coef. de variación ${(cv * 100).toFixed(0)}%).`,
+        ? "Con una sola referencia usable, el rango optimista/pesimista usa una dispersión por defecto (coef. de variación 15%), no la variabilidad real observada. El pesimista se aleja más del valor probable que el optimista, porque en proyectos de software los sobrecostos grandes son más frecuentes que las terminaciones muy adelantadas."
+        : `Rango calculado a partir de la dispersión real de esfuerzo entre las ${references.length} referencias (coef. de variación ${(cv * 100).toFixed(0)}%). El pesimista se aleja más del valor probable que el optimista, porque los sobrecostos grandes son más frecuentes que terminar muy adelantado.`,
     ];
     if (appliedRuleNote) assumptions.push(appliedRuleNote);
     if (includedRoleIds && includedRoleIds.length > 0) {

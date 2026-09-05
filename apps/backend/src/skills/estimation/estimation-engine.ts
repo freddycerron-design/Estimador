@@ -66,13 +66,78 @@ export function coefficientOfVariation(totals: number[]): number {
   return Math.sqrt(variance) / mean;
 }
 
-/** Rango optimista/probable/pesimista a partir de un valor central y un coeficiente de dispersión. */
+/**
+ * Aproximación racional de Peter Acklam para la inversa de la CDF normal estándar (función
+ * "probit", Φ⁻¹). JS/TS no trae una implementación nativa. Precisión: error relativo < 1.15e-9
+ * en todo el rango (0,1) — muchísimo más de lo necesario para percentiles de negocio (P10/P90;
+ * solo hacen falta 3-4 cifras significativas). Usada por `rangeFrom` para el modelo lognormal
+ * (spec pedido por usuario: reemplazar la banda simétrica ±cv, que asume una normal, por un
+ * modelo sesgado a la derecha — los sobrecostos grandes son más frecuentes que terminar muy
+ * adelantado). Ref: Peter Acklam, "An algorithm for computing the inverse normal cumulative
+ * distribution function".
+ */
+export function inverseNormalCdf(p: number): number {
+  if (p <= 0 || p >= 1) throw new Error(`inverseNormalCdf: p debe estar en (0,1), recibido ${p}`);
+
+  const [a0, a1, a2, a3, a4, a5] = [-3.969683028665376e1, 2.209460984245205e2, -2.759285104469687e2, 1.383577518672690e2, -3.066479806614716e1, 2.506628277459239e0];
+  const [b0, b1, b2, b3, b4] = [-5.447609879822406e1, 1.615858368580409e2, -1.556989798598866e2, 6.680131188771972e1, -1.328068155288572e1];
+  const [c0, c1, c2, c3, c4, c5] = [-7.784894002430293e-3, -3.223964580411365e-1, -2.400758277161838e0, -2.549732539343734e0, 4.374664141464968e0, 2.938163982698783e0];
+  const [d0, d1, d2, d3] = [7.784695709041462e-3, 3.224671290700398e-1, 2.445134137142996e0, 3.754408661907416e0];
+
+  const pLow = 0.02425;
+  const pHigh = 1 - pLow;
+
+  if (p < pLow) {
+    const q = Math.sqrt(-2 * Math.log(p));
+    return (((((c0 * q + c1) * q + c2) * q + c3) * q + c4) * q + c5) / ((((d0 * q + d1) * q + d2) * q + d3) * q + 1);
+  }
+  if (p <= pHigh) {
+    const q = p - 0.5;
+    const r = q * q;
+    return ((((( a0 * r + a1) * r + a2) * r + a3) * r + a4) * r + a5) * q / (((((b0 * r + b1) * r + b2) * r + b3) * r + b4) * r + 1);
+  }
+  const q = Math.sqrt(-2 * Math.log(1 - p));
+  return -(((((c0 * q + c1) * q + c2) * q + c3) * q + c4) * q + c5) / ((((d0 * q + d1) * q + d2) * q + d3) * q + 1);
+}
+
+const OPTIMISTIC_PERCENTILE = 0.1;
+const PESSIMISTIC_PERCENTILE = 0.9;
+const Z_OPTIMISTIC = inverseNormalCdf(OPTIMISTIC_PERCENTILE); // ≈ -1.2816
+const Z_PESSIMISTIC = inverseNormalCdf(PESSIMISTIC_PERCENTILE); // ≈ +1.2816
+const MIN_CV_FOR_RANGE = 0.1;
+const MAX_CV_FOR_RANGE = 0.75;
+
+/**
+ * Rango optimista/probable/pesimista modelando el valor final como una variable LOGNORMAL (spec
+ * pedido por usuario: la banda simétrica anterior ±cv asumía, en la práctica, una distribución
+ * normal — implica que terminar muy adelantado es tan probable como un sobrecosto igual de
+ * grande. En proyectos de TI los sobrecostos/retrasos grandes son más frecuentes que las
+ * terminaciones muy adelantadas, así que el pesimista debe alejarse más del valor probable que
+ * el optimista).
+ *
+ * `probable` se trata como la MEDIANA (P50) de la lognormal (mu = ln(probable)), no como su
+ * media — así el "probable" reportado queda idéntico al valor de entrada (que aguas arriba ya es
+ * la suma de los line items), sin introducir una discrepancia entre esa tabla y el rango. sigma
+ * se deriva de la relación cerrada entre el coeficiente de variación (cv) de una lognormal y su
+ * parámetro sigma: cv² = exp(sigma²) − 1  →  sigma = sqrt(ln(1 + cv²)). optimista/pesimista son
+ * los percentiles 10/90: exp(mu + sigma·Φ⁻¹(p)).
+ *
+ * `cv` se acota a [10%, 75%] antes de usarse: el piso evita una banda casi nula cuando cv≈0
+ * (misma idea que el piso del modelo anterior); el techo (antes 50%, ahora 75%) evita que una
+ * dispersión extrema (pocas referencias muy divergentes) infle el pesimista de forma absurda,
+ * sin aplanar la asimetría que es el objetivo de este cambio.
+ */
 export function rangeFrom(probable: number, cv: number): EffortRange {
-  const spread = Math.min(0.5, Math.max(0.1, cv)); // acotado: nunca menos de ±10%, nunca más de ±50%
+  if (!(probable > 0)) {
+    return { optimistic: 0, probable: Math.round(probable) || 0, pessimistic: 0 };
+  }
+  const clampedCv = Math.min(MAX_CV_FOR_RANGE, Math.max(MIN_CV_FOR_RANGE, cv));
+  const sigma = Math.sqrt(Math.log(1 + clampedCv * clampedCv));
+  const mu = Math.log(probable);
   return {
-    optimistic: Math.round(probable * (1 - spread)),
+    optimistic: Math.round(Math.exp(mu + sigma * Z_OPTIMISTIC)),
     probable: Math.round(probable),
-    pessimistic: Math.round(probable * (1 + spread)),
+    pessimistic: Math.round(Math.exp(mu + sigma * Z_PESSIMISTIC)),
   };
 }
 
