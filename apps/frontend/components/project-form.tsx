@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { ProjectFormInput, ProjectDetailDTO } from "@/lib/api-client";
 import { btnPrimary, btnSecondary, input as inputClass, label as labelClass } from "@/lib/ui-classes";
+import { PROJECT_TYPE_OPTIONS, PROJECT_CATEGORY_OPTIONS } from "@/lib/project-taxonomy";
 
 const COMPLEXITY_OPTIONS = ["low", "medium", "high", "very_high"] as const;
 const COMPLEXITY_LABELS: Record<string, string> = { low: "Baja", medium: "Media", high: "Alta", very_high: "Muy alta" };
@@ -93,7 +94,16 @@ export function ProjectForm({
         </div>
         <div>
           <label className={label}>Tipo de proyecto *</label>
-          <input value={projectType} onChange={(e) => setProjectType(e.target.value)} className={field} placeholder="ej. internal_business_app" required />
+          <select value={projectType} onChange={(e) => setProjectType(e.target.value)} className={field} required>
+            <option value="" disabled>
+              Selecciona…
+            </option>
+            {PROJECT_TYPE_OPTIONS.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
       <div>
@@ -102,8 +112,15 @@ export function ProjectForm({
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
-          <label className={label}>Industria</label>
-          <input value={industry ?? ""} onChange={(e) => setIndustry(e.target.value)} className={field} />
+          <label className={label}>Categoría del proyecto</label>
+          <select value={industry ?? ""} onChange={(e) => setIndustry(e.target.value)} className={field}>
+            <option value="">—</option>
+            {PROJECT_CATEGORY_OPTIONS.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
         </div>
         <div>
           <label className={label}>Complejidad</label>

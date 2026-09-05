@@ -5,6 +5,7 @@ import { Paperclip, X, FileText, AlertTriangle } from "lucide-react";
 import type { RequirementFormInput, RequirementDTO, RequirementAttachmentDTO } from "@/lib/api-client";
 import { listRequirementAttachments, uploadRequirementAttachment, deleteRequirementAttachment } from "@/lib/api-client";
 import { btnPrimary, btnSecondary, input as inputClass, label as labelClass } from "@/lib/ui-classes";
+import { PROJECT_TYPE_OPTIONS, PROJECT_CATEGORY_OPTIONS } from "@/lib/project-taxonomy";
 
 const COMPLEXITY_OPTIONS = ["low", "medium", "high", "very_high"] as const;
 const COMPLEXITY_LABELS: Record<string, string> = { low: "Baja", medium: "Media", high: "Alta", very_high: "Muy alta" };
@@ -154,11 +155,25 @@ export function RequirementForm({
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <label className={labelClass}>Tipo de proyecto</label>
-          <input value={projectType ?? ""} onChange={(e) => setProjectType(e.target.value)} className={inputClass} placeholder="ej. internal_business_app" />
+          <select value={projectType ?? ""} onChange={(e) => setProjectType(e.target.value)} className={inputClass}>
+            <option value="">—</option>
+            {PROJECT_TYPE_OPTIONS.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
         </div>
         <div>
-          <label className={labelClass}>Industria</label>
-          <input value={industry ?? ""} onChange={(e) => setIndustry(e.target.value)} className={inputClass} />
+          <label className={labelClass}>Categoría del proyecto</label>
+          <select value={industry ?? ""} onChange={(e) => setIndustry(e.target.value)} className={inputClass}>
+            <option value="">—</option>
+            {PROJECT_CATEGORY_OPTIONS.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
       <div>

@@ -1,5 +1,6 @@
 import * as XLSX from "xlsx";
 import { db, unwrap } from "../../db/insforge-client.js";
+import { PROJECT_TYPE_OPTIONS, PROJECT_CATEGORY_OPTIONS } from "@estimador/shared-types";
 
 export interface RequirementImportRow {
   title: string;
@@ -52,8 +53,8 @@ export function buildRequirementsImportTemplateBuffer(): Buffer {
   const example: RequirementImportRow = {
     title: "Portal de solicitudes de compra",
     description: "Aplicación web para gestionar solicitudes de compra internas, integrada con el ERP SAP, con 5 tipos de usuario.",
-    project_type: "internal_business_app",
-    industry: "manufactura",
+    project_type: PROJECT_TYPE_OPTIONS[0],
+    industry: PROJECT_CATEGORY_OPTIONS[3],
     technologies: "React;Node.js;PostgreSQL",
     modules: "Solicitudes;Aprobaciones;Reportes",
     integrations: "SAP ERP;SSO corporativo",

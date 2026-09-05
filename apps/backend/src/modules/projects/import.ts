@@ -2,6 +2,7 @@ import * as XLSX from "xlsx";
 import { db, unwrap } from "../../db/insforge-client.js";
 import { loadReferenceLookup } from "../../config/reference-lookup.js";
 import { createEmbeddingProvider } from "../../llm/provider-factory.js";
+import { PROJECT_TYPE_OPTIONS, PROJECT_CATEGORY_OPTIONS } from "@estimador/shared-types";
 
 /**
  * Proceso de normalización para convertir formatos históricos externos (Excel/CSV) a
@@ -68,8 +69,8 @@ export function buildImportTemplateBuffer(): Buffer {
   const example: ImportRow = {
     name: "Portal de Autoservicio de Clientes",
     description: "Portal web para que clientes consulten su estado de cuenta y generen solicitudes de soporte.",
-    project_type: "internal_business_app",
-    industry: "telecomunicaciones",
+    project_type: PROJECT_TYPE_OPTIONS[0],
+    industry: PROJECT_CATEGORY_OPTIONS[3],
     technologies: "React;Node.js;PostgreSQL",
     modules: "Autoservicio;Solicitudes de soporte;Notificaciones",
     integrations: "CRM;SSO corporativo",
