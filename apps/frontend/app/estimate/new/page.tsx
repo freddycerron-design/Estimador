@@ -463,10 +463,47 @@ function ChatUI() {
                             value={isPercent ? paramForm[key].value * 100 : paramForm[key].value}
                             disabled={!paramForm[key].included || !isValueEditable}
                             onChange={(e) => updateParam(key, { value: isPercent ? Number(e.target.value) / 100 : Number(e.target.value) })}
-                            className={`${inputClass} max-w-[140px] disabled:bg-slate-50 disabled:text-slate-400 dark:disabled:bg-navy-900/60 dark:disabled:text-slate-500 ${isPercent ? "pr-7" : ""}`}
+                            // Flechas nativas ocultas solo para Contingencia (spec pedido por
+                            // usuario) — se reemplazan por las propias de más abajo, mismo tamaño
+                            // de campo, en color de marca.
+                            className={`${inputClass} max-w-[140px] disabled:bg-slate-50 disabled:text-slate-400 dark:disabled:bg-navy-900/60 dark:disabled:text-slate-500 ${isPercent ? "pr-7" : ""} ${
+                              key === "DEFAULT_CONTINGENCY_PCT"
+                                ? "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                : ""
+                            }`}
                           />
                           {isPercent && (
-                            <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-500">%</span>
+                            <span
+                              className={`pointer-events-none absolute top-1/2 -translate-y-1/2 text-sm text-slate-400 dark:text-slate-500 ${
+                                key === "DEFAULT_CONTINGENCY_PCT" ? "right-6" : "right-2.5"
+                              }`}
+                            >
+                              %
+                            </span>
+                          )}
+                          {key === "DEFAULT_CONTINGENCY_PCT" && (
+                            <div className="absolute right-1 top-1/2 flex -translate-y-1/2 flex-col leading-none">
+                              <button
+                                type="button"
+                                tabIndex={-1}
+                                disabled={!paramForm[key].included || !isValueEditable}
+                                onClick={() => updateParam(key, { value: Math.min(1, Math.max(0, paramForm[key].value + 0.01)) })}
+                                className="text-brand-500 hover:text-brand-600 disabled:pointer-events-none disabled:opacity-30 dark:text-brand-400 dark:hover:text-brand-300"
+                                aria-label="Aumentar contingencia"
+                              >
+                                <ChevronUp className="h-2.5 w-2.5" strokeWidth={3} />
+                              </button>
+                              <button
+                                type="button"
+                                tabIndex={-1}
+                                disabled={!paramForm[key].included || !isValueEditable}
+                                onClick={() => updateParam(key, { value: Math.min(1, Math.max(0, paramForm[key].value - 0.01)) })}
+                                className="text-brand-500 hover:text-brand-600 disabled:pointer-events-none disabled:opacity-30 dark:text-brand-400 dark:hover:text-brand-300"
+                                aria-label="Disminuir contingencia"
+                              >
+                                <ChevronDown className="h-2.5 w-2.5" strokeWidth={3} />
+                              </button>
+                            </div>
                           )}
                         </div>
                         {key === "DEFAULT_CONTINGENCY_PCT" && (
