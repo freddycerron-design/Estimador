@@ -5,9 +5,10 @@ import { createOrchestratorProvider } from "../llm/provider-factory.js";
 import { toolDefinitions, dispatchTool, skillKeyForToolName } from "./tool-registry.js";
 import { buildSkillContext } from "../skills/skill-runtime.js";
 import { loadActiveAgentPrompt } from "../config/agent-prompt.js";
-import { assembleBundleFromTrace } from "./bundle-assembler.js";
+import { assembleBundleFromTrace, missingRequiredTools } from "./bundle-assembler.js";
 import { persistEstimate } from "./estimate-persistence.js";
 import { resolveEffectiveParameters } from "../config/estimation-parameters.js";
+import { buildToolOutputCache } from "./tool-history-cache.js";
 
 export interface ToolTraceEntry {
   toolCallId: string;
@@ -48,6 +49,10 @@ export async function runAgentTurn(params: {
   const maxIterations = params.maxToolIterations ?? DEFAULT_MAX_TOOL_ITERATIONS;
   // Se carga una sola vez por turno (no cambia entre iteraciones de tool-use del mismo turno).
   const systemPrompt = await loadActiveAgentPrompt();
+  // Último resultado exitoso de cada tool en TODA la conversación (no solo este turno) — respaldo
+  // para cuando el modelo no repite una tool que ya corrió bien en un turno anterior (spec: bug
+  // reportado por usuario, ver tool-history-cache.ts).
+  const historicalOutputs = buildToolOutputCache(params.history);
 
   const messages: LlmMessage[] = [...params.history];
   const newMessages: LlmMessage[] = [];
@@ -90,7 +95,8 @@ export async function runAgentTurn(params: {
         // que generate_report: el backend completa lo que puede verificar, no confía en la memoria del LLM).
         if (call.name === "estimate_effort_duration") {
           const lastAnalysis = [...toolTrace].reverse().find((t) => t.toolName === "analyze_requirement" && !t.error);
-          const projectType = (lastAnalysis?.output as { projectType?: string | null } | undefined)?.projectType;
+          const historicalAnalysis = historicalOutputs.get("analyze_requirement") as { projectType?: string | null } | undefined;
+          const projectType = (lastAnalysis?.output as { projectType?: string | null } | undefined)?.projectType ?? historicalAnalysis?.projectType;
           toolInput = {
             ...(call.input as object),
             ...(projectType ? { projectType } : {}),
@@ -106,10 +112,11 @@ export async function runAgentTurn(params: {
         }
 
         if (call.name === "generate_report") {
-          const bundle = await assembleBundleFromTrace(toolTrace);
+          const bundle = await assembleBundleFromTrace(toolTrace, historicalOutputs);
           if (!bundle) {
+            const missing = missingRequiredTools(toolTrace, historicalOutputs);
             throw new Error(
-              "generate_report: aún no se completaron los pasos previos (analyze_requirement, search_similar_projects, estimate_effort_duration, calculate_cost) en este turno."
+              `generate_report: todavía falta ejecutar con éxito ${missing.join(", ")} — ejecútala(s) ahora, en este mismo mensaje, antes de volver a intentar generate_report. No hace falta reconstruir el reporte a mano: una vez que esas tools respondan bien, generate_report arma el resultado solo.`
             );
           }
           const template = (call.input as { template?: string })?.template ?? "detailed";
