@@ -5,7 +5,7 @@ import Link from "next/link";
 import { FileText, ArrowRight, RefreshCw } from "lucide-react";
 import { RequireAuth } from "@/components/require-auth";
 import { PageHeader } from "@/components/page-header";
-import { card } from "@/lib/ui-classes";
+import { card, badge } from "@/lib/ui-classes";
 import { listEstimates, type EstimateSummaryDTO } from "@/lib/api-client";
 
 function confidenceBadge(score: string | null): { label: string; className: string } {
@@ -34,7 +34,7 @@ function EstimatesList() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500 dark:border-navy-700 dark:bg-navy-900/40 dark:text-slate-400">
-              <th className="px-4 py-2.5">Proyecto</th>
+              <th className="px-4 py-2.5">Requerimiento</th>
               <th className="px-4 py-2.5">Plantilla</th>
               <th className="px-4 py-2.5">Duración (sem.)</th>
               <th className="px-4 py-2.5">Costo</th>
@@ -48,7 +48,16 @@ function EstimatesList() {
               const conf = confidenceBadge(e.confidence_score);
               return (
                 <tr key={e.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 dark:border-navy-700 dark:hover:bg-navy-700/40">
-                  <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">{e.projectName ?? "—"}</td>
+                  <td className="px-4 py-3">
+                    {e.requirementNumber !== null ? (
+                      <div className="flex items-center gap-2">
+                        <span className={`shrink-0 ${badge}`}>REQ-{e.requirementNumber}</span>
+                        <span className="font-medium text-slate-800 dark:text-slate-100">{e.requirementTitle}</span>
+                      </div>
+                    ) : (
+                      <span className="font-medium text-slate-800 dark:text-slate-100">{e.projectName ?? "—"}</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{e.template_used ?? "—"}</td>
                   <td className="px-4 py-3">{e.duration_weeks_probable ?? "—"}</td>
                   <td className="px-4 py-3">

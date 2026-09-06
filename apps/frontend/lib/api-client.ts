@@ -141,6 +141,10 @@ export interface EstimateSummaryDTO {
   confidence_score: string | null;
   created_at: string;
   projectName: string | null;
+  /** Requerimiento de origen, si esta estimación vino de uno (spec pedido por usuario: mostrar
+   * código+título de requerimiento en la grilla en vez del nombre de "proyecto" auto-generado). */
+  requirementNumber: number | null;
+  requirementTitle: string | null;
 }
 
 export function listEstimates() {

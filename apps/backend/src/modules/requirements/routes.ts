@@ -43,12 +43,14 @@ export default async function requirementsRoutes(app: FastifyInstance) {
       ]);
       const byId = new Map([...byTitle, ...byDescription, ...byNumber].map((r) => [r.id, r]));
       let results = [...byId.values()].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
-      if (query.status) results = results.filter((r) => r.status === query.status);
+      // Un requerimiento ya estimado se retira del catálogo por defecto (spec pedido por usuario:
+      // pasa a vivir en Estimaciones) — salvo que se pida explícitamente ese status.
+      results = query.status ? results.filter((r) => r.status === query.status) : results.filter((r) => r.status !== "estimated");
       return results;
     }
 
     let builder = db.from("requirements").select().order("created_at", { ascending: false });
-    if (query.status) builder = builder.eq("status", query.status);
+    builder = query.status ? builder.eq("status", query.status) : builder.neq("status", "estimated");
     return unwrap<RequirementRow[]>("select:requirements:list", builder);
   });
 

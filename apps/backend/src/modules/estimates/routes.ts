@@ -19,13 +19,48 @@ export default async function estimatesRoutes(app: FastifyInstance) {
       "select:project_estimates:list",
       db.from("project_estimates").select().order("created_at", { ascending: false }).limit(100)
     );
+
     const projectIds = [...new Set(estimates.map((e) => e.project_id).filter((x): x is string => !!x))];
-    const projects =
+    const conversationIds = [...new Set(estimates.map((e) => e.conversation_id).filter((x): x is string => !!x))];
+
+    const [projects, conversations] = await Promise.all([
       projectIds.length > 0
-        ? await unwrap<{ id: string; name: string }[]>("select:projects:names_for_estimates", db.from("projects").select("id, name").in("id", projectIds))
-        : [];
+        ? unwrap<{ id: string; name: string }[]>("select:projects:names_for_estimates", db.from("projects").select("id, name").in("id", projectIds))
+        : Promise.resolve<{ id: string; name: string }[]>([]),
+      // Requerimiento de origen (spec pedido por usuario: mostrar código+título de requerimiento
+      // en vez del "proyecto" — el nombre auto-generado a partir de la descripción, ver
+      // estimate-persistence.ts) — vía la conversación que generó la estimación.
+      conversationIds.length > 0
+        ? unwrap<{ id: string; requirement_id: string | null }[]>(
+            "select:conversations:requirement_for_estimates",
+            db.from("conversations").select("id, requirement_id").in("id", conversationIds)
+          )
+        : Promise.resolve<{ id: string; requirement_id: string | null }[]>([]),
+    ]);
+
     const nameById = new Map(projects.map((p) => [p.id, p.name]));
-    return estimates.map((e) => ({ ...e, projectName: e.project_id ? (nameById.get(e.project_id) ?? null) : null }));
+    const requirementIdByConversation = new Map(conversations.map((c) => [c.id, c.requirement_id]));
+    const requirementIds = [...new Set([...requirementIdByConversation.values()].filter((x): x is string => !!x))];
+
+    const requirements =
+      requirementIds.length > 0
+        ? await unwrap<{ id: string; number: number; title: string }[]>(
+            "select:requirements:for_estimates",
+            db.from("requirements").select("id, number, title").in("id", requirementIds)
+          )
+        : [];
+    const requirementById = new Map(requirements.map((r) => [r.id, r]));
+
+    return estimates.map((e) => {
+      const requirementId = e.conversation_id ? (requirementIdByConversation.get(e.conversation_id) ?? null) : null;
+      const requirement = requirementId ? requirementById.get(requirementId) : undefined;
+      return {
+        ...e,
+        projectName: e.project_id ? (nameById.get(e.project_id) ?? null) : null,
+        requirementNumber: requirement?.number ?? null,
+        requirementTitle: requirement?.title ?? null,
+      };
+    });
   });
 
   app.get("/estimates/:id", async (req, reply) => {
