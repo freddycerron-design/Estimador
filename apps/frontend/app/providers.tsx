@@ -38,7 +38,12 @@ function NavBar() {
               `style-src-attr 'unsafe-inline'`. Con una clase arbitraria de Tailwind (valor fijo,
               no dinámico) el mismo fondo queda resuelto en el CSS compilado, sin necesitar esa
               excepción. */}
-          <div className="h-16 w-16 shrink-0 rounded-lg bg-white bg-[url('/brand/estimadora-logo.png')] bg-cover bg-center shadow-sm" />
+          {/* Sin `bg-white`/`rounded-lg`: el logo nuevo ya trae su propio marco circular con fondo
+              transparente — un cuadrado blanco detrás se veía como una "calcomanía" pegada sobre
+              el navbar oscuro (reportado por el usuario). `bg-contain` (no `bg-cover`) más
+              `bg-no-repeat` muestran el logo completo sin recortarlo ni, por diferencia de
+              proporciones, dejarlo repetirse en mosaico dentro de la caja. */}
+          <div className="h-16 w-16 shrink-0 bg-[url('/brand/estimadora-logo.png')] bg-contain bg-center bg-no-repeat" />
           <span className="font-display text-xl font-semibold tracking-tight">
             <span className="text-white">Estima</span>
             <span className="text-brand-400">DORA</span>
