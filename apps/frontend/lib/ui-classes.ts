@@ -28,6 +28,11 @@ export const badgeBrand =
 // por defecto de Tailwind (no hay uno propio de marca), en oscuro reusa `azure` igual que accent.
 export const badgeBlue =
   "inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-azure-500/20 dark:text-azure-300";
+// Igual que `badge` (fondo neutro) pero con el texto siempre en naranja de marca — spec pedido
+// por usuario: los tags bajo las tarjetas del home deben leerse en naranja sin importar el acento
+// (azul/violeta) de esa tarjeta en particular.
+export const badgeBrandText =
+  "inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-brand-600 dark:bg-navy-700 dark:text-brand-400";
 
 export const input =
   "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-400 focus:outline-none focus:ring-1 focus:ring-brand-400 dark:border-navy-600 dark:bg-navy-800 dark:text-slate-100 dark:placeholder-slate-500";

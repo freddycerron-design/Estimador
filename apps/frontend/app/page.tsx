@@ -1,22 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { Sparkles, FileText, FolderKanban, Brain, ClipboardList } from "lucide-react";
+import { FileText, FolderKanban, Brain, ClipboardList } from "lucide-react";
 import { RequireAuth } from "@/components/require-auth";
 import { useAuth } from "@/lib/auth-context";
-import { card, badge as tagPill, badgeAccent, badgeBrand, badgeBlue } from "@/lib/ui-classes";
+import { card, badgeAccent, badgeBlue, badgeBrandText } from "@/lib/ui-classes";
 
-// 3 acentos disponibles en la paleta de la app (brand/naranja, accent/violeta, blue — con su
-// pareja `azure` en oscuro) — se reparten entre las 5 tarjetas agrupando por afinidad: brand para
-// las dos áreas de datos/catálogo (Requerimientos, Proyectos), accent para las dos impulsadas por
-// IA (Nueva estimación, Aprendizaje), y blue para el resultado (Estimaciones), que queda solo.
+// 2 acentos para el ícono/badge/tagline de cada tarjeta (spec pedido por usuario: Requerimientos
+// y Proyectos pasan de naranja a azul, igual que Estimaciones — solo Aprendizaje, la única
+// impulsada por IA que queda tras quitar "Nueva estimación", se mantiene en violeta/azure).
+// El naranja de marca queda reservado para el texto de los tags de abajo, siempre igual en las
+// 4 tarjetas sin importar su acento — ver `badgeBrandText` en ui-classes.ts.
 const ACCENTS = {
-  brand: {
-    tile: "bg-brand-100 dark:bg-brand-500/15",
-    icon: "text-brand-600 dark:text-brand-400",
-    badge: badgeBrand,
-    tagline: "text-brand-600 dark:text-brand-400",
-  },
   accent: {
     tile: "bg-accent-100 dark:bg-azure-500/20",
     icon: "text-accent-600 dark:text-azure-400",
@@ -35,24 +30,13 @@ const CARDS = [
   {
     href: "/requirements",
     icon: ClipboardList,
-    accent: "brand",
+    accent: "blue",
     badge: "Catálogo",
     title: "Requerimientos",
     tagline: "De la idea al detalle accionable",
     description: "Requerimientos cargados con sus archivos adjuntos ya leídos — listos para convertirse en una estimación.",
     label: "Qué incluye",
     tags: ["PDF, Word, PPTX, Excel", "Lectura automática", "Historial completo"],
-  },
-  {
-    href: "/estimate/new",
-    icon: Sparkles,
-    accent: "accent",
-    badge: "Conversación",
-    title: "Nueva estimación",
-    tagline: "El agente hace las preguntas correctas",
-    description: "Describe el proyecto o cárgalo desde un requerimiento — el agente busca evidencia histórica y pregunta lo que le falta.",
-    label: "Cómo trabaja",
-    tags: ["Preguntas numeradas", "Opciones con un clic", "Nunca adivina"],
   },
   {
     href: "/estimates",
@@ -68,7 +52,7 @@ const CARDS = [
   {
     href: "/projects",
     icon: FolderKanban,
-    accent: "brand",
+    accent: "blue",
     badge: "Evidencia",
     title: "Proyectos",
     tagline: "La memoria que hace confiables las estimaciones",
@@ -102,7 +86,7 @@ export default function HomePage() {
           Estimador de proyectos de TI basado en evidencia histórica — no adivina, busca proyectos similares reales y te dice de dónde
           viene cada número.
         </p>
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-2">
           {CARDS.map(({ href, icon: Icon, accent, badge, title, tagline, description, label, tags }) => {
             const a = ACCENTS[accent];
             return (
@@ -122,7 +106,7 @@ export default function HomePage() {
                   <p className="mb-2 text-[0.68rem] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">{label}</p>
                   <div className="flex flex-wrap gap-1.5">
                     {tags.map((t) => (
-                      <span key={t} className={tagPill}>
+                      <span key={t} className={badgeBrandText}>
                         {t}
                       </span>
                     ))}
