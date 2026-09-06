@@ -165,7 +165,7 @@ function RequirementsList() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar por título o descripción…"
+            placeholder="Buscar por título, descripción o código (REQ-42)…"
             className={`${input} pl-9`}
           />
         </div>

@@ -105,7 +105,7 @@ export default function HomePage() {
         </p>
         <div className="mb-6 grid gap-4 sm:grid-cols-3">
           {KPIS.map(({ key, label }) => (
-            <div key={key} className={cardPadded}>
+            <div key={key} className={`${cardPadded} text-center`}>
               <p className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">{label}</p>
               <p className="mt-1 font-display text-2xl font-semibold tabular-nums text-slate-900 dark:text-slate-100">
                 {summary ? summary[key] : "—"}

@@ -20,17 +20,28 @@ const RequirementBody = z.object({
 });
 
 export default async function requirementsRoutes(app: FastifyInstance) {
-  // Búsqueda simple por título O descripción (el SDK no expone `.or()` — se hacen 2 queries y se combinan).
+  // Búsqueda simple por título, descripción O código (REQ-<number>) — el SDK no expone `.or()`,
+  // se hacen queries separadas y se combinan. El código (spec pedido por usuario: buscar por
+  // "código de requerimiento") se busca por igualdad exacta sobre `number`, no ilike — es una
+  // columna numérica, y una búsqueda parcial de números (ej. "4" encontrando REQ-42) sería más
+  // confusa que útil para un código. Acepta el número solo ("42") o con el prefijo que se muestra
+  // en pantalla ("REQ-42", sin distinguir mayúsculas/minúsculas ni espacios alrededor del guion).
   app.get("/requirements", async (req) => {
     const query = req.query as { q?: string; status?: string };
 
     if (query.q) {
       const pattern = `%${query.q}%`;
-      const [byTitle, byDescription] = await Promise.all([
+      const numberMatch = query.q.trim().match(/^req[\s-]*(\d+)$|^(\d+)$/i);
+      const asNumber = numberMatch ? Number(numberMatch[1] ?? numberMatch[2]) : null;
+
+      const [byTitle, byDescription, byNumber] = await Promise.all([
         unwrap<RequirementRow[]>("select:requirements:by_title", db.from("requirements").select().ilike("title", pattern).order("created_at", { ascending: false })),
         unwrap<RequirementRow[]>("select:requirements:by_description", db.from("requirements").select().ilike("description", pattern).order("created_at", { ascending: false })),
+        asNumber !== null
+          ? unwrap<RequirementRow[]>("select:requirements:by_number", db.from("requirements").select().eq("number", asNumber))
+          : Promise.resolve<RequirementRow[]>([]),
       ]);
-      const byId = new Map([...byTitle, ...byDescription].map((r) => [r.id, r]));
+      const byId = new Map([...byTitle, ...byDescription, ...byNumber].map((r) => [r.id, r]));
       let results = [...byId.values()].sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
       if (query.status) results = results.filter((r) => r.status === query.status);
       return results;
