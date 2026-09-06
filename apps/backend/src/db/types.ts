@@ -151,6 +151,8 @@ export interface MessageRow {
 
 export interface ProjectRow {
   id: string;
+  /** Código corto (spec pedido por usuario: análogo a REQ-<number> de requirements) — se muestra en UI como "PRY-<number>". */
+  number: number;
   name: string;
   description: string;
   project_type: string;

@@ -37,6 +37,10 @@ export type DimensionScores = z.infer<typeof DimensionScoresSchema>;
 
 export interface SimilarityCandidate {
   projectId: string;
+  /** Nombre del proyecto histórico (spec pedido por usuario: el agente debe referenciar
+   * proyectos históricos por su NOMBRE, nunca por su id/código, también en su narración libre
+   * en el chat — no solo en el reporte final, que ya lo resolvía aparte vía referenceProjectNames). */
+  projectName: string;
   totalSimilarity: number;
   dimensionScores: DimensionScores;
   isOutlier: boolean;

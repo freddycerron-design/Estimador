@@ -118,6 +118,7 @@ export const projectSimilaritySkill = defineSkill<RequirementFeatures & { conver
 
     const candidates: SimilarityCandidate[] = scored.map((s, i) => ({
       projectId: s.project.id,
+      projectName: s.project.name,
       totalSimilarity: s.totalSimilarity,
       dimensionScores: s.dimensionScores,
       isOutlier: outlierFlags[i]?.isOutlier ?? false,

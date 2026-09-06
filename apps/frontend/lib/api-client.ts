@@ -165,6 +165,8 @@ export function getHomeSummary() {
 // --- Proyectos / actuals ---
 export interface ProjectDTO {
   id: string;
+  /** Código corto (spec pedido por usuario: análogo a REQ-<number>) — se muestra como "PRY-<number>". */
+  number: number;
   name: string;
   status: string;
   project_type: string;

@@ -237,6 +237,7 @@ function ProjectsList() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2">
+                      {p.status === "completed" && <span className={badge}>PRY-{p.number}</span>}
                       <p className="font-medium text-slate-900 dark:text-slate-100">{p.name}</p>
                       <span
                         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
