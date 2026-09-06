@@ -147,6 +147,17 @@ export function listEstimates() {
   return apiFetch<EstimateSummaryDTO[]>(`/estimates`);
 }
 
+export interface HomeSummaryDTO {
+  pendingRequirements: number;
+  totalEstimates: number;
+  totalProjects: number;
+}
+
+/** 3 KPIs del home (spec pedido por usuario) — conteos exactos, no el largo de una lista paginada. */
+export function getHomeSummary() {
+  return apiFetch<HomeSummaryDTO>(`/home/summary`);
+}
+
 // --- Proyectos / actuals ---
 export interface ProjectDTO {
   id: string;

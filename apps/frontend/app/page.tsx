@@ -1,10 +1,20 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FileText, FolderKanban, Brain, ClipboardList } from "lucide-react";
 import { RequireAuth } from "@/components/require-auth";
 import { useAuth } from "@/lib/auth-context";
-import { card, badgeAccent, badgeBlue, badgeBrandText } from "@/lib/ui-classes";
+import { getHomeSummary, type HomeSummaryDTO } from "@/lib/api-client";
+import { card, cardPadded, badgeAccent, badgeBlue, badgeBrandText } from "@/lib/ui-classes";
+
+// Mismo patrón de tile ya usado para Duración/Costo/Confianza en estimate/[id]/page.tsx —
+// etiqueta chica en mayúsculas + número grande.
+const KPIS: { key: keyof HomeSummaryDTO; label: string }[] = [
+  { key: "pendingRequirements", label: "Requerimientos pendientes de estimar" },
+  { key: "totalEstimates", label: "Total de estimaciones" },
+  { key: "totalProjects", label: "Total de proyectos históricos" },
+];
 
 // 2 acentos para el ícono/badge/tagline de cada tarjeta (spec pedido por usuario: Requerimientos
 // y Proyectos pasan de naranja a azul, igual que Estimaciones — solo Aprendizaje, la única
@@ -75,6 +85,13 @@ const CARDS = [
 
 export default function HomePage() {
   const { user } = useAuth();
+  const [summary, setSummary] = useState<HomeSummaryDTO | null>(null);
+
+  useEffect(() => {
+    getHomeSummary()
+      .then(setSummary)
+      .catch(() => setSummary(null)); // los KPIs son un extra informativo — si fallan, no bloquean el resto del home.
+  }, []);
 
   return (
     <RequireAuth>
@@ -82,11 +99,21 @@ export default function HomePage() {
         <h1 className="mb-1 font-display text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
           Hola{user?.name ? `, ${user.name}` : ""} 👋
         </h1>
-        <p className="mb-8 text-slate-500 dark:text-slate-400">
+        <p className="mb-6 text-slate-500 dark:text-slate-400">
           Estimador de proyectos de TI basado en evidencia histórica — no adivina, busca proyectos similares reales y te dice de dónde
           viene cada número.
         </p>
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="mb-6 grid gap-4 sm:grid-cols-3">
+          {KPIS.map(({ key, label }) => (
+            <div key={key} className={cardPadded}>
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">{label}</p>
+              <p className="mt-1 font-display text-2xl font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+                {summary ? summary[key] : "—"}
+              </p>
+            </div>
+          ))}
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {CARDS.map(({ href, icon: Icon, accent, badge, title, tagline, description, label, tags }) => {
             const a = ACCENTS[accent];
             return (

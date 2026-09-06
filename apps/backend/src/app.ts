@@ -14,6 +14,7 @@ import requirementsRoutes from "./modules/requirements/routes.js";
 import meRoutes from "./modules/me/routes.js";
 import skillsRoutes from "./modules/skills/routes.js";
 import agentPromptRoutes from "./modules/agent-prompt/routes.js";
+import homeRoutes from "./modules/home/routes.js";
 
 export function buildApp() {
   const app = Fastify({
@@ -64,6 +65,7 @@ export function buildApp() {
   app.register(meRoutes);
   app.register(skillsRoutes);
   app.register(agentPromptRoutes);
+  app.register(homeRoutes);
 
   app.get("/health", async () => ({ status: "ok", env: env.NODE_ENV }));
 
